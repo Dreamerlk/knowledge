@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>整理php防注入和XSS攻击通用过滤</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">整理php防注入和XSS攻击通用过滤</h1>
+        <div class="show-content">
+          <p>对网站发动XSS攻击的方式有很多种，仅仅使用php的一些内置过滤函数是对付不了的，即使你将filter_var,mysql_real_escape_string,htmlentities,htmlspecialchars,strip_tags这些函数都使用上了也不一定能保证绝对的安全。</p><p>那么如何预防 XSS 注入？主要还是需要在用户数据过滤方面得考虑周全，在这里不完全总结下几个 Tips</p><p>1. 假定所有的用户输入数据都是“邪恶”的</p><p>2. 弱类型的脚本语言必须保证类型和期望的一致</p><p>3. 考虑周全的正则表达式</p><p>4. strip_tags、htmlspecialchars 这类函数很好用</p><p>5. 外部的 Javascript 不一定就是可靠的</p><p>6. 引号过滤必须要重点注意</p><p>7. 除去不必要的 HTML 注释</p><p>8. Exploer 求你放过我吧……</p><p><b>方法一，利用php htmlentities函数</b></p><p>例子</p><p>php防止XSS跨站脚本攻击的方法:是针对非法的HTML代码包括单双引号等，使用htmlspecialchars()函数 。</p><p>在使用htmlspecialchars()函数的时候注意第二个参数, 直接用htmlspecialchars($string) 的话,第二个参数默认是ENT_COMPAT,函数默认只是转化双引号(“), 不对单引号(‘)做转义.</p><p>所以,htmlspecialchars函数更多的时候要加上第二个参数, 应该这样用: htmlspecialchars($string,ENT_QUOTES).当然,如果需要不转化如何的引号,用htmlspecialchars($string,ENT_NOQUOTES).</p><p>另外, 尽量少用htmlentities, 在全部英文的时候htmlentities和htmlspecialchars没有区别,都可以达到目的.但是,中文情况下, htmlentities却会转化所有的html代码，连同里面的它无法识别的中文字符也给转化了。</p><p>htmlentities和htmlspecialchars这两个函数对 '之类的字符串支持不好,都不能转化, 所以用htmlentities和htmlspecialchars转化的字符串只能防止XSS攻击,不能防止SQL注入攻击.</p><p>所有有打印的语句如echo，print等 在打印前都要使用htmlentities() 进行过滤，这样可以防止Xss，注意中文要写出htmlentities($name,ENT_NOQUOTES,GB2312) 。</p><p>方法二，什么也不多说我们给一个函数</p><p>例子</p><p>functionxss_clean($data){</p><p>//Fix &amp;entity＼n;</p><p>$data=str_replace(array('&amp;','&lt;','&gt;'),array('&amp;','&lt;','&gt;'),$data);</p><p>$data=preg_replace('/(&amp;#*＼w+)[＼x00-＼x20]+;/u','$1;',$data);</p><p>$data=preg_replace('/(&amp;#x*[0-9A-F]+);*/iu','$1;',$data);</p><p>$data=html_entity_decode($data,ENT_COMPAT,'UTF-8');</p><p>//Remove any attribute starting with "on" or xmlns</p><p>$data=preg_replace('#(&lt;[^&gt;]+?[＼x00-＼x20"＼'])(?:on|xmlns)[^&gt;]*+&gt;#iu','$1&gt;',$data);</p><p>//Remove javascript: and vbscript: protocols</p><p>$data=preg_replace('#([a-z]*)[＼x00-＼x20]*=[＼x00-＼x20]*([`＼'"]*)[＼x00-＼x20]*j[＼x00-＼x20]*a[＼x00-＼x20]*v[＼x00-＼x20]*a[＼x00-＼x20]*s[＼x00-＼x20]*c[＼x00-＼x20]*r[＼x00-＼x20]*i[＼x00-＼x20]*p[＼x00-＼x20]*t[＼x00-＼x20]*:#iu','$1=$2nojavascript...',$data);</p><p>$data=preg_replace('#([a-z]*)[＼x00-＼x20]*=([＼'"]*)[＼x00-＼x20]*v[＼x00-＼x20]*b[＼x00-＼x20]*s[＼x00-＼x20]*c[＼x00-＼x20]*r[＼x00-＼x20]*i[＼x00-＼x20]*p[＼x00-＼x20]*t[＼x00-＼x20]*:#iu','$1=$2novbscript...',$data);</p><p>$data=preg_replace('#([a-z]*)[＼x00-＼x20]*=([＼'"]*)[＼x00-＼x20]*-moz-binding[＼x00-＼x20]*:#u','$1=$2nomozbinding...',$data);</p><p>//Only works in IE:</p><p>$data=preg_replace('#(&lt;[^&gt;]+?)style[＼x00-＼x20]*=[＼x00-＼x20]*[`＼'"]*.*?expression[＼x00-＼x20]*＼([^&gt;]*+&gt;#i','$1&gt;',$data);</p><p>$data=preg_replace('#(&lt;[^&gt;]+?)style[＼x00-＼x20]*=[＼x00-＼x20]*[`＼'"]*.*?behaviour[＼x00-＼x20]*＼([^&gt;]*+&gt;#i','$1&gt;',$data);</p><p>$data=preg_replace('#(&lt;[^&gt;]+?)style[＼x00-＼x20]*=[＼x00-＼x20]*[`＼'"]*.*?s[＼x00-＼x20]*c[＼x00-＼x20]*r[＼x00-＼x20]*i[＼x00-＼x20]*p[＼x00-＼x20]*t[＼x00-＼x20]*:*[^&gt;]*+&gt;#iu','$1&gt;',$data);</p><p>//Remove namespaced elements (we do not need them)</p><p>$data=preg_replace('#]*+&gt;#i','',$data);</p><p>do{//Remove really unwanted tags</p><p>$old_data=$data;</p><p>$data=preg_replace('#]*+&gt;#i','',$data);</p><p>}while($old_data!==$data);</p><p>//we are done...</p><p>return$data;</p><p>}</p><p>方法三：</p><p>//php防注入和XSS攻击通用过滤.</p><p>$_GET&amp;&amp;</p><p>SafeFilter($_GET);</p><p>$_POST&amp;&amp;</p><p>SafeFilter($_POST);</p><p>$_COOKIE&amp;&amp;</p><p>SafeFilter($_COOKIE);</p><p>functionSafeFilter</p><p>(&amp;$arr)</p><p>{</p><p>$ra=Array('/([\x00-\x08,\x0b-\x0c,\x0e-\x19])/','/script/','/javascript/','/vbscript/','/expression/','/applet/','/meta/','/xml/','/blink/','/link/','/style/','/embed/','/object/','/frame/','/layer/','/title/','/bgsound/','/base/','/onload/','/onunload/','/onchange/','/onsubmit/','/onreset/','/onselect/','/onblur/','/onfocus/','/onabort/','/onkeydown/','/onkeypress/','/onkeyup/','/onclick/','/ondblclick/','/onmousedown/','/onmousemove/','/onmouseout/','/onmouseover/','/onmouseup/','/onunload/');</p><p>if(is_array($arr))</p><p>{</p><p>foreach($arras$key=&gt;$value)</p><p>{</p><p>if(!is_array($value))</p><p>{</p><p>if(!get_magic_quotes_gpc())//不对magic_quotes_gpc转义过的字符使用addslashes(),避免双重转义。</p><p>{</p><p>$value=addslashes($value);//给单引号（'）、双引号（"）、反斜线（\）与</p><p>NUL（NULL 字符）加上反斜线转义</p><p>}</p><p>$value=preg_replace($ra,'',$value);//删除非打印字符，粗暴式过滤xss可疑字符串$arr[$key]</p><p>= htmlentities(strip_tags($value));//去除</p><p>HTML 和 PHP 标记并转换为 HTML 实体</p><p>}</p><p>else</p><p>{</p><p>SafeFilter($arr[$key]);</p><p>}</p><p>}</p><p>}</p><p>}</p><p>?&gt;</p><p>1.1 什么是XSS攻击</p><p>XSS是一种经常出现在web应用中的计算机安全漏洞，它允许恶意web用户将代码植入到提供给其它用户使用的页面中。比如这些代码包括HTML代码和客户端脚本。攻击者利用XSS漏洞旁路掉访问控制——例如<a href="http://baike.baidu.com/view/3747010.htm" target="_blank">同源策略</a>(same origin policy)。这种类型的漏洞由于被黑客用来编写危害性更大的<a href="http://baike.baidu.com/view/77554.htm" target="_blank">网络钓鱼</a>(Phishing)攻击而变得广为人知。对于<a href="http://baike.baidu.com/view/2633667.htm" target="_blank">跨站脚本攻击</a>，黑客界共识是：跨站脚本攻击是新型的“<a href="http://baike.baidu.com/view/700134.htm" target="_blank">缓冲区溢出攻击</a>“，而JavaScript是新型的“ShellCode”。</p><p>数据来源：2007 OWASP Top 10的MITRE数据</p><p>注：OWASP是世界上最知名的Web安全与<a href="http://baike.baidu.com/view/1317202.htm" target="_blank">数据库安全</a>研究组织</p><p>在2007年OWASP所统计的所有安全威胁中，跨站脚本攻击占到了22%，高居所有Web威胁之首。</p><p>XSS攻击的危害包括</p><p>1、盗取各类用户<a href="http://baike.baidu.com/view/261440.htm" target="_blank">帐号</a>，如机器登录帐号、用户网银帐号、各类管理员帐号</p><p>2、控制企业数据，包括读取、篡改、添加、删除企业敏感数据的能力</p><p>3、盗窃企业重要的具有商业价值的资料</p><p>4、非法转账</p><p>5、强制发送电子邮件</p><p>6、网站挂马</p><p>7、控制受害者机器向其它网站发起攻击</p><p>1.2 XSS漏洞的分类</p><p>XSS漏洞按照攻击利用手法的不同，有以下三种类型：</p><p>类型A，本地利用漏洞，这种漏洞存在于页面中客户端脚本自身。其攻击过程如下所示：</p><p>Alice给Bob发送一个恶意构造了Web的<a href="http://baike.baidu.com/view/1496.htm" target="_blank">URL</a>。</p><p>Bob点击并查看了这个URL。</p><p>恶意页面中的JavaScript打开一个具有漏洞的HTML页面并将其安装在Bob电脑上。</p><p>具有漏洞的HTML页面包含了在Bob电脑本地域执行的JavaScript。</p><p>Alice的<a href="http://baike.baidu.com/view/335609.htm" target="_blank">恶意脚本</a>可以在Bob的电脑上执行Bob所持有的权限下的命令。</p><p>类型B，反射式漏洞，这种漏洞和类型A有些类似，不同的是Web客户端使用Server端脚本生成页面为用户提供数据时，如果未经验证的用户数据被包含在页面中而未经<a href="http://baike.baidu.com/view/4757776.htm" target="_blank">HTML实体</a>编码，客户端代码便能够注入到<a href="http://baike.baidu.com/view/2065821.htm" target="_blank">动态页面</a>中。其攻击过程如下：</p><p>Alice经常浏览某个网站，此网站为Bob所拥有。Bob的站点运行Alice使用用户名/密码进行登录，并存储敏感信息(比如银行帐户信息)。</p><p>Charly发现Bob的站点包含反射性的XSS漏洞。</p><p>Charly编写一个利用漏洞的URL，并将其冒充为来自Bob的邮件发送给Alice。</p><p>Alice在登录到Bob的站点后，浏览Charly提供的URL。</p><p>嵌入到URL中的<a href="http://baike.baidu.com/view/335609.htm" target="_blank">恶意脚本</a>在Alice的浏览器中执行，就像它直接来自Bob的服务器一样。此脚本盗窃敏感信息(授权、信用卡、帐号信息等)然后在Alice完全不知情的情况下将这些信息发送到Charly的Web站点。</p><p>类型C，存储式漏洞，该类型是应用最为广泛而且有可能影响到Web服务器自身安全的漏洞，<a href="http://baike.baidu.com/view/18742.htm" target="_blank">骇客</a>将攻击脚本上传到Web服务器上，使得所有访问该页面的用户都面临信息泄漏的可能，其中也包括了Web服务器的管理员。其攻击过程如下：</p><p>Bob拥有一个Web站点，该站点允许用户发布信息/浏览已发布的信息。</p><p>Charly注意到Bob的站点具有类型C的XSS漏洞。</p><p>Charly发布一个热点信息，吸引其它用户纷纷阅读。</p><p>Bob或者是任何的其他人如Alice浏览该信息，其会话cookies或者其它信息将被Charly盗走。</p><p>类型A直接威胁用户个体，而类型B和类型C所威胁的对象都是企业级Web应用。</p><p><a href="" target="_blank"></a><a href="" target="_blank"></a><a href="" target="_blank"></a></p><p>传统防御技术</p><p><a href="" target="_blank">编辑</a></p><p>2.1.1基于特征的防御</p><p>XSS漏洞和著名的SQL<a href="http://baike.baidu.com/view/677614.htm" target="_blank">注入漏洞</a>一样，都是利用了Web页面的编写不完善，所以每一个漏洞所利用和针对的弱点都不尽相同。这就给XSS漏洞防御带来了困难：不可能以单一特征来概括所有XSS攻击。</p><p>传统XSS防御多采用<a href="http://baike.baidu.com/view/665174.htm" target="_blank">特征匹配</a>方式，在所有提交的信息中都进行匹配检查。对于这种类型的XSS攻击，采用的模式匹配方法一般会需要对“javascript”这个<a href="http://baike.baidu.com/view/390935.htm" target="_blank">关键字</a>进行检索，一旦发现提交信息中包含“javascript”，就认定为XSS攻击。这种检测方法的缺陷显而易见：骇客可以通过插入字符或完全编码的方式躲避检测：</p><p>躲避方法1)在javascript中加入多个tab键，得到</p><p>&lt; IMG SRC="jav ascript:alert('XSS');" &gt;;</p><p>躲避方法2) 在javascript中加入(空格)<a href="http://baike.baidu.com/view/263416.htm" target="_blank">字符</a>，得到</p><p>&lt; IMG SRC="javascri pt:alert('XSS');" &gt;;</p><p>躲避方法3) 在javascript中加入(回车)字符，得到</p><p>&lt; IMG SRC="jav</p><p>ascript:alert('XSS');" &gt;;</p><p>躲避方法4)在javascript中的每个<a href="http://baike.baidu.com/view/263416.htm" target="_blank">字符</a>间加入回车换行符，得到</p><p>&lt; IMG SRC="javascrip\r</p><p>\nt:alert('XSS');" &gt;</p><p>躲避方法5)对"javascript:alert('XSS')"采用完全编码，得到</p><p>&lt; IMGSRC=javascrip?74:alert('XSS') &gt;</p><p>上述方法都可以很容易的躲避基于特征的检测。而除了会有大量的漏报外，基于特征的</p><p>还存在大量的误报可能：在上面的例子中，对上述某网站这样一个地址，由于包含了关键字“javascript”，也将会触发报警。</p><p>2.1.2 基于代码修改的防御</p><p>和SQL注入防御一样，XSS攻击也是利用了Web页面的编写疏忽，所以还有一种方法就是从Web应用开发的角度来避免：</p><p>步骤1、对所有用户提交内容进行可靠的输入验证，包括对URL、查询关键字、HTTP头、POST数据等，仅接受指定长度范围内、采用适当格式、采用所预期的字符的内容提交，对其他的一律过滤。</p><p>步骤2、实现Session标记(session tokens)、CAPTCHA系统或者HTTP引用头检查，以防功能被第三方网站所执行。</p><p>步骤3、确认接收的的内容被妥善的规范化，仅包含最小的、安全的Tag(没有javascript)，去掉任何对远程内容的引用(尤其是样式表和javascript)，使用HTTP only的cookie。</p><p>当然，如上操作将会降低Web业务系统的可用性，用户仅能输入少量的制定字符，人与系统间的交互被降到极致，仅适用于信息发布型站点。并且考虑到很少有Web编码人员受过正规的安全培训，很难做到完全避免页面中的XSS漏洞。</p><p>3 综论</p><p>XSS攻击作为Web业务的最大威胁之一，不仅危害Web业务本身，对访问Web业务的用户也会带来直接的影响，如何防范和阻止XSS攻击，保障Web站点的业务安全，是定位于业务威胁防御的入侵防御产品的本职工作。</p><p><a href="" target="_blank"></a><a href="" target="_blank"></a><a href="" target="_blank"></a></p><p>受攻击事件</p><p><a href="" target="_blank">编辑</a></p><p>新浪微博XSS受攻击事件</p><p>2011年6月28日晚，新浪微博出现了一次比较大的XSS攻击事件。大量用户自动发送诸如：“郭美美事件的一些未注意到的细节”，“建党大业中穿帮的地方”，“让女人心动的100句诗歌”，“3D肉团团高清普通话版种子”，“这是传说中的神仙眷侣啊”，“惊爆!范冰冰艳照真流出了”等等微博和私信，并自动关注一位名为<a href="http://baike.baidu.com/view/6001028.htm" target="_blank">hellosamy</a>的用户。</p><p>事件的经过线索如下：</p><p>20:14，开始有大量带V的认证用户中招转发<a href="http://baike.baidu.com/view/2596.htm" target="_blank">蠕虫</a></p><p>20:30，某网站中的病毒页面无法访问</p><p>20:32，新浪微博中hellosamy用户无法访问</p><p>21:02，新浪漏洞修补完毕</p><p>http://baike.baidu.com/link?url=U6aHSRPZGSNdlqqaQPs_CEHwU6PJuv71AgK2bjszQR2jSzggRNGomF4BjImBqCMIKJARajr-cLI2PdvCKXcN6a</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

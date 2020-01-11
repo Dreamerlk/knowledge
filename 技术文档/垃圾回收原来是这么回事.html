@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>垃圾回收原来是这么回事</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">垃圾回收原来是这么回事</h1>
+        <div class="show-content">
+          <p>摘要：John McCarthy身为Lisp之父和人工智能之父，同时，他也是GC之父。1960年，他在其<a href="http://www-formal.stanford.edu/jmc/recursive/node4.html#tex2html8" target="_blank">论文</a>中首次发布了GC算法（其实是委婉的提出😂）。而<a href="https://zh.wikipedia.org/wiki/Java" target="_blank">Java</a>的前身Oak是在1990发布的，利用JVM实现了跨平台。GC因此一举成名。<br></p><p>最近想复习一下JVM的知识。然后发现网上不少文章在写JVM的垃圾回收算法时，都比较偏向于具体实现，而少有站在更高角度来看垃圾回收算法的文章。而我本人想对垃圾回收算法有个全景的认识，所以，就找到了这本《垃圾回收的算法与实现》（以下简称《垃圾回收》）。本篇博客就是尝试对“全景”的总结。</p><p>以下为方便讨论，垃圾回收缩写成GC。</p><p>为什么要有GC</p><p>我时而听到C++程序员说我们是被GC惯坏了的一代。的确是这样的，我本人在学习GC算法时，大脑里第一问题就是为什么需要GC这样的东西。说明我已经认为GC是理所当然了。😂</p><p>总的一句话：没有GC的世界，我们需要手动进行内存管理，而手动内存管理是纯技术活，又容易出错。</p><p>既然我们写的大多程序都是为了解决现实业务问题，那么，我们为什么不把这种纯技术活自动化呢？但是自动化，也是有代价的。<b>这是我的个人理解，不代表John McCarthy本人的理解</b>。</p><p>“垃圾”的定义</p><p>首先，我们要给个“垃圾”的定义，才能进行回收吧。书中给出的定义： &gt; 把分配到堆中那些不能通过程序引用的对象称为非活动对象，也就是死掉的对象，我们称为“垃圾”。</p><p>GC的定义</p><p>因为我们期望让内存管理变得自动（只管用内存，不管内存的回收），我们就必须做两件事情： &gt; 1. 找到内存空间里的垃圾 &gt; 2.</p><p>回收垃圾，让程序员能再次利用这部分空间 [1] 只要满足这两项功能的程序，就是GC，不论它是在JVM中，还是在Ruby的VM中。</p><p>但这只是两个需求，并没有说明GC应该何时找垃圾，何时回收垃圾等等更具体的问题，各类GC算法就是在这些更具体问题的处理方式上施展手脚。</p><p>GC的历史</p><p>John McCarthy身为Lisp之父和人工智能之父，同时，他也是GC之父。1960年，他在其<a href="http://www-formal.stanford.edu/jmc/recursive/node4.html#tex2html8" target="_blank">论文</a>中首次发布了GC算法（其实是委婉的提出😂）。</p><p><a href="http://www-formal.stanford.edu/jmc/recursive/recursive.html" target="_blank">标记-清除算法</a>由John McCarthy在1960年提出</p><p><a href="http://dl.acm.org/citation.cfm?id=367501&amp;dl=ACM&amp;coll=DL&amp;CFID=895960203&amp;CFTOKEN=65936422" target="_blank">引用计数法</a>由George E. Collins在1960年提出 此算法会有循环引用问题，<a href="http://dl.acm.org/citation.cfm?id=367649" target="_blank">Harold McBeth</a>1963年指出。</p><p><a href="http://dl.acm.org/citation.cfm?id=888858" target="_blank">复制算法</a>由Marvin L. Minsky在1963年提出</p><p>《垃圾回收》的作者认为：</p><p>从50年前GC算法首次发布以来，众多研究者对其进行了各种各样的研究，因此许多GC算法也得以发布。[2] 但事实上，这些算法只不过是把前文中提到的三种算法进行组合或应用。也可以这么说，1963年GC复制算法诞生时，GC的根本性内容就已经完成了。[3]</p><p>那我们常常听说的分代垃圾回收又是怎么回事？作者是这样说的： &gt;</p><p>人们从众多程序案例中总结出了一个经验：“大部分的对象在生成后马上就变成了垃圾，很少有对象能活得很久”。分代垃圾回收利用该经验，在对象中导入了“年龄”的概念，经历过一次GC后活下来的对象年龄为1岁。[4]</p><p>分代垃圾回收中把对象分类成几代，针对不同的代使用不同的GC算法，我们把刚生成的对象称为新生代对象，到达一定年龄的对象则称为老年代对象。[5]</p><p>好了，这下我总算知道为什么要分代了，我的总结是： 将对象根据存活概率进行分类，对存活时间长一些的对象，可以减少扫描“垃圾”的时间，以减少GC频率和时长。<b>根本思路就是对对象进行分类，才能针对各个分类采用不同的垃圾回收算法，以对各算法进行扬长避短。</b></p><p>留一个问题给读者：我们知道分代垃圾回收所采用的堆结构是：</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-cabd8a8b7fa8da63.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-cabd8a8b7fa8da63.jpg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>为什么新生代空间要分成“生成空间”和“幸存空间”，而幸存空间又分成两块大小相等的幸存空间1，幸存空间2?</p><p>这些GC算法共同解决的问题</p><p>上面我们说了，GC的定义只给出了需求，三种算法都为实现这个需求，那么它们总会遇到共同要解决的问题吧？ 我尝试总结出：</p><p>如何分辨出什么是垃圾？</p><p>如何、何时搜索垃圾？</p><p>如何、何时清除垃圾？</p><p>这样，只要涉及到垃圾回收，我就可以从这2点需求，3个共同问题（两点三共）出发来讨论、学习。</p><p>如何评价GC算法？</p><p>如果没有评价标准，我们当然无法评估这些GC算法的性能。作者给出了4个标准：</p><p>吞吐量: 单位时间内的处理能力</p><p>最大暂停时间：GC执行过程中，应用暂停的时长。 较大的吞吐量和较短的最大暂停时间不可兼得</p><p>堆的使用效率：就是堆空间的利用率。 可用的堆越大，GC运行越快；相反，越想有效地利用有限的堆，GC花费的时间就越长。</p><p>访问的局部性：把具有引用关系的对象安排在堆中较近的位置，就能提高在缓存中读取到想利用的数据的概率。</p><p>好吧。两点三共，四标~</p><p>小结</p><p><b>搞清楚为什么要GC，要实现GC都要解决什么问题，而各类算法又是怎么解决的，最后怎么评价这些算法。GC原来是这么回事。</b></p><p>但是这不是GC的全部。但是提供我一个思考GC的思考框架。</p><p>以上就是《垃圾回收的算法与实现》的读书笔记。如果想更深入，可以阅读《垃圾回收算法手册:自动内存管理的艺术》。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

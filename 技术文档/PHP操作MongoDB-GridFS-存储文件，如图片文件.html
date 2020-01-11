@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP操作MongoDB GridFS 存储文件，如图片文件</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">PHP操作MongoDB GridFS 存储文件，如图片文件</h1>
+        <div class="show-content">
+          <p>GridFS是MongoDB的一个内置功能，它提供一组文件操作的API以利用MongoDB存储文件，GridFS的基本原理是将文件保存在两个Collection中，一个保存文件索引，一个保存文件内容，文件内容按一定大小分成若干块，每一块存在一个Document中，这种方法不仅提供了文件存储，还提供了对文件相关的一些附加属性（比如MD5值，文件名等等）的存储。<br></p><p>01</p><p>02//</p><p>初始化gridfs</p><p>03$conn=newMongo();//</p><p>连接MongoDB</p><p>04$db=$conn-&gt;photos;//</p><p>选择数据库</p><p>05$collection=$db-&gt;getGridFS();//</p><p>取得gridfs对象</p><p>06</p><p>07//</p><p>gridfs有三种方式存储文件</p><p>08//</p><p>第一种直接存储文件</p><p>09$id=$collection-&gt;storeFile("./logo.png");</p><p>10</p><p>11//</p><p>第二种存储文件二进制流</p><p>12$data=</p><p>get_file_contents("./logo.png");</p><p>13$id=$collection-&gt;storeBytes($data,array("param"=&gt;'附加参数将随图片一起存入'));</p><p>14</p><p>15//</p><p>第三种保存直接表单提交的文件$_FILES</p><p>16$id=$collection-&gt;storeUpload('upfile');</p><p>17//</p><p>相当于</p><p>18$id=$collection-&gt;storeFile($_FILES['upfile']['tmp_name']);</p><p>19</p><p>20//--------------以上是保存图片--下面开始读取图片----------------</p><p>21</p><p>22//</p><p>保存成功后返回$id = md5字符串</p><p>23$logo=$collection-&gt;findOne(array('_id'=&gt;$id));//</p><p>以_id为索引取得文件</p><p>24header('Content-type:</p><p>image/png');//</p><p>输出图片头</p><p>25echo$logo-&gt;getBytes();//</p><p>输出数据流</p><p>26?&gt;</p><p><b>特别备注：</b></p><p>通过$id = $collection-&gt;storeFile($_FILES['upfile']['tmp_name']);产生的ID，是MongoDB的ID对象，而不是一个字符串！如以下格式：</p><p>1{</p><p>2"_id":</p><p>ObjectId("525418525ba8a18c1b000001"),</p><p>3"filename":"D:\\php\\xampp\\tmp\\php8116.tmp",</p><p>4"uploadDate":</p><p>ISODate("2013-10-08T14:36:02.0Z"),</p><p>5"length":</p><p>NumberInt(55862),</p><p>6"chunkSize":</p><p>NumberInt(262144),</p><p>7"md5":"a6f19f3434f0b36bb2611cd4c6d82b35"</p><p>8}</p><p>不过，我们可以通过$id = strval($id)，把上述ID对象字符串化，如可得到上述的525418525ba8a18c1b000001值，再把这个值存到MySQL数据库中，到时候可通过这个 字符串ID 作为条件，找到相应的MongoDB资源。参考代码如下：</p><p>1$conn=newMongo(C('127.0.0.1:27017'));//如果设置了密码自己配置DSN</p><p>2$db=$conn-&gt;selectDB('edu_sns');//</p><p>选择数据库</p><p>3$collection=$db-&gt;getGridFS('zk_attach');//</p><p>选择集合，相等于选择数据表</p><p>4</p><p>5$id=$_GET['id'];</p><p>6$object=$collection-&gt;findOne(array('_id'=&gt;newMongoId($id)));</p><p>7header('Content-type:</p><p>image/png');</p><p>8echo$object-&gt;getBytes();</p><p><b>最近因工作需要研究了下GridFS，并整理了个Demo出来。。分享一下经验。。</b></p><p><b>gfs.php文件</b></p><p>01</p><p>02//</p><p>连接Mongo并初始化GFS</p><p>03$conn=newMongo(C('127.0.0.1:27017'));//如果设置了密码自己配置DSN</p><p>04$db=$conn-&gt;selectDB('edu_sns');//</p><p>选择数据库</p><p>05$collection=$db-&gt;getGridFS('zk_attach');//</p><p>选择集合，相等于选择数据表</p><p>06</p><p>07//</p><p>上传图片</p><p>08if(isset($_FILES['upfile']))</p><p>{</p><p>09</p><p>10//</p><p>保存新上传的文件</p><p>11$size=$_FILES['upfile']['size'];</p><p>12$md5=</p><p>md5_file($_FILES['upfile']['tmp_name']);</p><p>13$exists=$collection-&gt;findOne(array('md5'=&gt;$md5,'length'=&gt;$size),array('md5'));</p><p>14if(empty($exists))</p><p>{</p><p>15$collection-&gt;storeUpload('upfile');</p><p>16</p><p>17//</p><p>或修改为如下代码，并存入一些自定义参数</p><p>18/*</p><p>19$filename=$_FILES['upfile']['name'];</p><p>20$filetype=$_FILES['upfile']['type'];</p><p>21$tmpfilepath=$_FILES['upfile']['tmp_name'];</p><p>22$id=$gridfs-&gt;storeFile($tmpfilepath,</p><p>array('filename' =&gt; $filename, 'filetype' =&gt; $filetype));</p><p>23*/</p><p>24</p><p>25}else{</p><p>26unlink($_FILES['upfile']['tmp_name']);</p><p>27}</p><p>28echo"</p><p>图片路径为:</p><p></p><p>http://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}?img={$md5}";</p><p>29</p><p>30}elseif($id=$_GET['img'])</p><p>{//</p><p>生成图片</p><p>31</p><p>32//</p><p>索引图片文件</p><p>33$image=$collection-&gt;findOne(array('md5'=&gt;$id));</p><p>34</p><p>35//</p><p>设定文档类型，显示图片</p><p>36$img_bytes=$image-&gt;getBytes();</p><p>37include_once'thumb.php';</p><p>38$w=is_numeric($_GET['w'])</p><p>?intval($_GET['w'])</p><p>: 100;</p><p>39Thumb::maxWidth($img_bytes,$w);</p><p>40</p><p>41}elseif($id=$_GET['del'])</p><p>{//</p><p>删除图片</p><p>42$s=$collection-&gt;remove(array('md5'=&gt;$id));</p><p>43header('Location:'.$_SERVER['HTTP_REFERER']);</p><p>44</p><p>45}else{//</p><p>图片列表</p><p>46$cursor=$collection-&gt;find();</p><p>47foreach($cursoras$obj)</p><p>:</p><p>48echo'</p><p>href="?img='.$obj-&gt;file['md5']</p><p>.'&amp;w=800"&gt;</p><p>src="?img='.$obj-&gt;file['md5']</p><p>.'"</p><p>border="0" /&gt;</p><p>.'"&gt;删除';</p><p>49endforeach</p><p>50;</p><p>51}</p><p>52?&gt;</p><p><b>thumb.php 缩略图文件</b></p><p>001</p><p>002classThumb</p><p>{</p><p>003</p><p>004/**</p><p>005*</p><p>以最大宽度缩放图像</p><p>006*</p><p>007*</p><p>@param string $im 图像元数据</p><p>008*</p><p>@param float $w 最大宽度</p><p>009*/</p><p>010staticfunctionmaxWidth($im,$w)</p><p>{</p><p>011if(empty($im)</p><p>||empty($w)</p><p>|| !is_numeric($w))</p><p>{</p><p>012thrownewException("缺少必须的参数");</p><p>013}</p><p>014$im=</p><p>imagecreatefromstring($im);//</p><p>创建图像</p><p>015list</p><p>($im_w,$im_h)</p><p>= self::getsize($im);//</p><p>获取图像宽高</p><p>016if($im_w&gt;$w)</p><p>{</p><p>017$new_w=$w;</p><p>018$new_h=$w/$im_w*$im_h;</p><p>019}else{</p><p>020$new_w=$im_w;</p><p>021$new_h=$im_h;</p><p>022}</p><p>023$dst_im=</p><p>imagecreatetruecolor($new_w,$new_h);</p><p>024imagecopyresampled($dst_im,$im,</p><p>0, 0, 0, 0,$new_w,$new_h,$im_w,$im_h);</p><p>025header('Content-type:image/jpeg');</p><p>026imagepng($dst_im);</p><p>027imagedestroy($dst_im);</p><p>028imagedestroy($im);</p><p>029}</p><p>030</p><p>031/**</p><p>032*</p><p>以最大高度缩放图像</p><p>033*</p><p>034*</p><p>@param string $im 图像元数据</p><p>035*</p><p>@param float $w 最大高度</p><p>036*/</p><p>037staticfunctionmaxHeight($im,$h)</p><p>{</p><p>038if(empty($im)</p><p>||empty($h)</p><p>|| !is_numeric($h))</p><p>{</p><p>039thrownewException("缺少必须的参数");</p><p>040}</p><p>041$im=</p><p>imagecreatefromstring($im);//</p><p>创建图像</p><p>042list</p><p>($im_w,$im_h)</p><p>= self::getsize($im);//</p><p>获取图像宽高</p><p>043if($im_h&gt;$h)</p><p>{</p><p>044$new_w=$h/$im_h*$im_w;</p><p>045$new_h=$h;</p><p>046}else{</p><p>047$new_w=$im_w;</p><p>048$new_h=$im_h;</p><p>049}</p><p>050$dst_im=</p><p>imagecreatetruecolor($new_w,$new_h);</p><p>051imagecopyresampled($dst_im,$im,</p><p>0, 0, 0, 0,$new_w,$new_h,$im_w,$im_h);</p><p>052header('Content-type:image/jpeg');</p><p>053imagepng($dst_im);</p><p>054imagedestroy($dst_im);</p><p>055imagedestroy($im);</p><p>056}</p><p>057</p><p>058/**</p><p>059*</p><p>生成固定大小的图像并按比例缩放</p><p>060*</p><p>061*</p><p>@param string $im 图像元数据</p><p>062*</p><p>@param float $w 最大宽度</p><p>063*</p><p>@param float $h 最大高度</p><p>064*/</p><p>065staticfunctionfixed($im,$w,$h)</p><p>{</p><p>066if(empty($im)</p><p>||empty($w)</p><p>||empty($h)</p><p>|| !is_numeric($w)</p><p>|| !is_numeric($h))</p><p>{</p><p>067thrownewException("缺少必须的参数");</p><p>068}</p><p>069$im=</p><p>imagecreatefromstring($im);//</p><p>创建图像</p><p>070list</p><p>($im_w,$im_h)</p><p>= self::getsize($im);//</p><p>获取图像宽高</p><p>071if($im_w&gt;$im_h||$w&lt;$h)</p><p>{</p><p>072$new_h=intval(($w/$im_w)</p><p>*$im_h);</p><p>073$new_w=$w;</p><p>074}else{</p><p>075$new_h=$h;</p><p>076$new_w=intval(($h/$im_h)</p><p>*$im_w);</p><p>077}</p><p>078//echo</p><p>"$im_w x $im_h <br> $new_w x $new_h <br> $x $y";exit;</p><p>079//</p><p>开始创建缩放后的图像</p><p>080$dst_im=</p><p>imagecreatetruecolor($new_w,$new_h);</p><p>081imagecopyresampled($dst_im,$im,</p><p>0, 0, 0, 0,$new_w,$new_h,$im_w,$im_h);</p><p>082header('Content-type:image/jpeg');</p><p>083imagepng($dst_im);</p><p>084imagedestroy($dst_im);</p><p>085imagedestroy($im);</p><p>086}</p><p>087</p><p>088/*</p><p>089*</p><p>获取图像大小</p><p>090*</p><p>091*</p><p>@param string $im 图像元数据</p><p>092*</p><p>@return array</p><p>093*/</p><p>094protectedstaticfunctiongetsize($im)</p><p>{</p><p>095returnarray(</p><p>096imagesx($im),</p><p>097imagesy($im)</p><p>098);</p><p>099}</p><p>100}</p><p>101?&gt;</p><p><b>index.html HTML表单文件</b></p><p>01</p><p>html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"&gt;</p><p>02</p><p>03</p><p>04</p><p>charset=utf-8"/&gt;</p><p>05Mongo</p><p>Gridfs</p><p>06</p><p>07</p><p>08</p><p>09</p><p>10</p><p>11</p><p>查看图片</p><p>12</p><p>13</p><p>14</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

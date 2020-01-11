@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>linux上keepalived+nginx实现高可用web负载均衡</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">linux上keepalived+nginx实现高可用web负载均衡</h1>
+        <div class="show-content">
+          <p>一、场景需求<br></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-d5a8885e69130d98?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-d5a8885e69130d98?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>二、Keepalived 简要介绍</p><p>Keepalived 是一种高性能的服务器高可用或热备解决方案，Keepalived 可以用来防止服务器单点故障的发生，通过配合 Nginx 可以实现 web 前端服务的高可用。</p><p>Keepalived 以 VRRP 协议为实现基础，用 VRRP 协议来实现高可用性(HA)。VRRP(VirtualRouter</p><p>Redundancy Protocol)协议是用于实现路由器冗余的协议，VRRP 协议将两台或多台路由器设备虚拟成一个设备，对外提供虚拟路由器 IP(一个或多个)，而在路由器组内部，如果实际拥有这个对外 IP 的路由器如果工作正常的话就是 MASTER，或者是通过<a href="http://lib.csdn.net/base/31" target="_blank">算法</a>选举产生，MASTER 实现针对虚拟路由器 IP 的各种网络功能，</p><p>如 ARP 请求，ICMP，以及数据的转发等；其他设备不拥有该虚拟 IP，状态是 BACKUP，除了接收 MASTER 的VRRP 状态通告信息外，不执行对外的网络功能。当主机失效时，BACKUP 将接管原先 MASTER 的网络功能。VRRP 协议使用多播数据来传输 VRRP 数据，VRRP 数据使用特殊的虚拟源 MAC 地址发送数据而不是自身网卡的 MAC 地址，VRRP 运行时只有 MASTER 路由器定时发送 VRRP 通告信息，表示 MASTER 工作正常以及虚拟路由器 IP(组)，BACKUP 只接收 VRRP 数据，不发送数据，如果一定时间内没有接收到 MASTER 的通告信息，各 BACKUP 将宣告自己成为 MASTER，发送通告信息，重新进行 MASTER 选举状态。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-62a4ef16c8218c94?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-62a4ef16c8218c94?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>三、方案规划</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-979ad74c9330acb2?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-979ad74c9330acb2?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>四、安装 Nginx</p><p>1、安装编译 Nginx 所需的依赖包</p><p>Connecting to 192.168.1.121:22...</p><p>Connection established.</p><p>To escape to local shell, press 'Ctrl+Alt+]'.</p><p>Last login: Sat Apr 16 17:55:20 2016 from 192.168.1.61</p><p>[root@edu-proxy--01 ~]# yum install gcc gcc-c++ make automake autoconf libtool pcre pcre-devel zlib zlib-devel openssl openssl-devel</p><p>2、上传 Nginx(nginx-1.6.2.tar.gz)到 /usr/local/src 目录</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-65b1e190a9a5a3c1?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-65b1e190a9a5a3c1?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>3、编译安装 Nginx</p><p>[root@edu-proxy--01 ~]# cd /usr/local/src/</p><p>[root@edu-proxy--01 src]# ls</p><p>keepalived-1.2.18.tar.gz  nginx-1.6.2.tar.gz</p><p>[root@edu-proxy--01 src]# tar -zxvf nginx-1.6.2.tar.gz</p><p>[root@edu-proxy--01 src]# cd nginx-1.6.2</p><p>[root@edu-proxy--01 nginx-1.6.2]# ./configure --prefix=/usr/local/nginx</p><p>[root@edu-proxy--01 nginx-1.6.2]# make &amp;&amp; make install</p><p>[root@edu-proxy--01 nginx-1.6.2]# vi /usr/local/nginx/conf/nginx.conf</p><p>user  root;</p><p>worker_processes  1;</p><p>#error_log  logs/error.log;</p><p>#error_log  logs/error.log  notice;</p><p>#error_log  logs/error.log  info;</p><p>#pid        logs/nginx.pid;</p><p>events {</p><p>worker_connections  1024;</p><p>}</p><p>http {</p><p>include       mime.types;</p><p>default_type  application/octet-stream;</p><p>#log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '</p><p>#                  '$status $body_bytes_sent "$http_referer" '</p><p>#                  '"$http_user_agent" "$http_x_forwarded_for"';</p><p>#access_log  logs/access.log  main;</p><p>sendfile        on;</p><p>#tcp_nopush     on;</p><p>#keepalive_timeout  0;</p><p>keepalive_timeout  65;</p><p>#gzip  on;</p><p>server {</p><p>listen       88;</p><p>server_name  localhost;</p><p>#charset koi8-r;</p><p>#access_log  logs/host.access.log  main;</p><p>location / {</p><p>root   html;</p><p>index  index.html index.htm;</p><p>}</p><p>#error_page  404              /404.html;</p><p># redirect server error pages to the static page /50x.html</p><p>error_page   500 502 503 504  /50x.html;</p><p>location = /50x.html {</p><p>root   html;</p><p>}</p><p>}</p><p>}</p><p>修改 Nginx 欢迎首页内容（用于后面<a href="http://lib.csdn.net/base/softwaretest" target="_blank">测试</a>，用于区分两个节点的 Nginx）：</p><p>vi /usr/local/nginx/html/index.html</p><p>192.168.1.121 中的标题加 1</p><p><a href="" target="_blank">Welcome to nginx! 1</a></p><p>192.168.1.122 中的标题加 2</p><p><a href="" target="_blank">Welcome to nginx! 2</a></p><p>5、系统防火墙打开对应的端口 88</p><p>vi /etc/sysconfig/iptables</p><p>-A INPUT -m state --state NEW -m tcp -p tcp --dport 88 -j ACCEPT</p><p>service iptables restart</p><p>6、测试 Nginx 是否安装成功</p><p>/usr/local/nginx/sbin/nginx -t</p><p>nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok</p><p>nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful</p><p>7、启动 Nginx</p><p>/usr/local/nginx/sbin/nginx</p><p>重启</p><p>/usr/local/nginx/sbin/nginx -s reload</p><p>8、设置 Nginx 开机启动</p><p>vi /etc/rc.local</p><p>加入</p><p>/usr/local/nginx/sbin/nginx</p><p>分别访问两个nginx</p><p>nginx1</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-dcb19348c3c66c34?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-dcb19348c3c66c34?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>2.nginx2</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-400dff562bc7530d?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-400dff562bc7530d?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>五、安装 Keepalived （<a href="http://www.keepalived.org/download.html" target="_blank">http://www.keepalived.org/download.html</a>）</p><p>1、上传或下载 keepalived（keepalived-1.2.18.tar.gz）到 /usr/local/src 目录</p><p>2、解压安装</p><p>cd /usr/local/src</p><p>tar -zxvf keepalived-1.2.18.tar.gz</p><p>cd keepalived-1.2.18</p><p>./configure --prefix=/usr/local/keepalived</p><p>make &amp;&amp; make install</p><p>3、将 keepalived 安装成<a href="http://lib.csdn.net/base/linux" target="_blank">Linux</a>系统服务：</p><p>因为没有使用 keepalived 的默认路径安装（默认是/usr/local）,安装完成之后，需要做一些工作</p><p>复制默认配置文件到默认路径</p><p>mkdir /etc/keepalived</p><p>cp /usr/local/keepalived/etc/keepalived/keepalived.conf /etc/keepalived/</p><p>复制 keepalived 服务脚本到默认的地址</p><p>cp /usr/local/keepalived/etc/rc.d/init.d/keepalived /etc/init.d/</p><p>cp /usr/local/keepalived/etc/sysconfig/keepalived /etc/sysconfig/</p><p>ln -s /usr/local/sbin/keepalived /usr/sbin/</p><p>ln -s /usr/local/keepalived/sbin/keepalived /sbin/</p><p>设置 keepalived 服务开机启动</p><p>chkconfig keepalived on</p><p>4、修改 Keepalived 配置文件</p><p>注意，如果linux用的网卡是eth0,interface就要写成eth1，用的是eth1就要写成eth1</p><p>(1) MASTER 节点配置文件（192.168.1.121）</p><p>vi /etc/keepalived/keepalived.conf</p><p>! Configuration File for keepalived</p><p>global_defs {</p><p>router_id edu-proxy-01</p><p>}</p><p>vrrp_script chk_nginx {</p><p>script "/etc/keepalived/nginx_check.sh"</p><p>interval 2</p><p>weight -20</p><p>}</p><p>vrrp_instance VI_1 {</p><p>state MASTER</p><p>interface eth0</p><p>virtual_router_id 51</p><p>mcast_src_ip 192.168.1.121</p><p>priority 100</p><p>nopreempt</p><p>advert_int 1</p><p>authentication {</p><p>auth_type PASS</p><p>auth_pass 1111</p><p>}</p><p>track_script {</p><p>chk_nginx</p><p>}</p><p>virtual_ipaddress {</p><p>192.168.1.120</p><p>}</p><p>BACKUP节点配置 （192.168.1.122）</p><p>! Configuration File for keepalived</p><p>global_defs {</p><p>router_id edu-proxy-02</p><p>}</p><p>vrrp_script chk_nginx {</p><p>script "/etc/keepalived/nginx_check.sh"</p><p>interval 2</p><p>weight -20</p><p>}</p><p>vrrp_instance VI_1 {</p><p>state BACKUP</p><p>interface eth0</p><p>virtual_router_id 51</p><p>mcast_src_ip 192.168.1.122</p><p>priority 90</p><p>advert_int 1</p><p>authentication {</p><p>auth_type PASS</p><p>auth_pass 1111</p><p>}</p><p>track_script {</p><p>chk_nginx</p><p>}</p><p>virtual_ipaddress {</p><p>192.168.1.120</p><p>}</p><p>}</p><p>5.编写Nginx状态检测脚本/etc/keepalived/nginx_check.sh(keepalived.conf中配置)</p><p>脚本要求:如果nginx停止运行，尝试启动，如果无法启动则杀死本机的keepalived进程，keepaied将虚拟ip绑定到BACKUP机器上，内容如下</p><p>#!/bin/bash</p><p>A=`ps -C nginx –no-header |wc -l`</p><p>if [ $A -eq 0 ];then</p><p>/usr/local/nginx/sbin/nginx</p><p>sleep 2</p><p>if [ `ps -C nginx --no-header |wc -l` -eq 0 ];then</p><p>killall keepalived</p><p>fi</p><p>fi</p><p>保存后给脚本授邓权限</p><p>chmod -x /etc/keepalived/nginx_check.sh</p><p>6.启动keepalived</p><p>serivce keepalived start</p><p>我们在cmd中查看arp</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-f93072c4202e7808?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-f93072c4202e7808?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>在edu-proxy-01</p><p>[root@edu-proxy--01 keepalived]# ip add</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-53d6d0b4f3b98084?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-53d6d0b4f3b98084?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>这里我们访问192.168.1.120:88</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-3ae4e6d25fdd43c6?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-3ae4e6d25fdd43c6?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>7.Keepalived+nginx的高可用测试</p><p>(1)关闭192.168.1.121的Nginx,Keepalived会将它重新启动</p><p>[root@edu-proxy--01 keepalived]# /usr/local/nginx/sbin/nginx -s stop</p><p>(2)关闭192.168.1.121中的Keepalived,VIP会切换到192.168.1.122中</p><p>[root@edu-proxy--01 keepalived]# service keepalived stop</p><p>root@edu-proxy-02 keepalived]# ip add</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-4a0a087a2cb5ec88?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-4a0a087a2cb5ec88?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>查看虚拟ip</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-0e9c4312f921bb7e?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-0e9c4312f921bb7e?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>说明此时VIP已经漂移到主机192.168.1.122上了</p><p>再能过VIP来访问Nginx集群，访问到的也是192.168.1.122</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-f0877ec8bfd77669?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-f0877ec8bfd77669?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>(3)重新启动192.168.1.121中的Keepalived,VIP又会切回到192.168.1.121中来</p><p>[root@edu-proxy--01 keepalived]# service keepalived start</p><p>查看虚拟机IP</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-c74055aa3e4f634c?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-c74055aa3e4f634c?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>ip add</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-d82bd57b2bf47805?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-d82bd57b2bf47805?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>Keepalived启动后，网络接口上又会创建出VIP192.168.1.120</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-6b9d46dabe068f3f?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-6b9d46dabe068f3f?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>Keepalived服务管理命令:</p><p>停止: service keepalived stop</p><p>启动: service keepalived start</p><p>重启: service keepalived restart</p><p>查看状态: service keepalived status</p><p>其他参考资料:</p><p>keepalived之vrrp_script总结:http://my.oschina<a href="http://lib.csdn.net/base/dotnet" target="_blank">.NET</a>/hncscwc/blog/158746</p><p>keepalived双机热备实现故障时发送邮件通知:http://www.2cto.com/os/201407/317795.html</p><p>基于keepalived实现VIP转移，lvs,nginx的高可用;:<a href="http://www.tuicool.com/articles/eu26Vz" target="_blank">http://www.tuicool.com/articles/eu26Vz</a></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

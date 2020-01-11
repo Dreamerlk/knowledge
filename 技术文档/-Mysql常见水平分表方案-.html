@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Mysql常见水平分表方案 </title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title"> Mysql常见水平分表方案 </h1>
+        <div class="show-content">
+          <p>根据经验，Mysql表数据一般达到百万级别，查询效率会很低，容易造成表锁，甚至堆积很多连接，直接挂掉；水平分表能够很大程度较少这些压力。<br></p><p><a href="" target="_blank">1.按时间分表</a></p><p>这种分表方式有一定的局限性，当数据有较强的实效性，如微博发送记录、微信消息记录等，这种数据很少有用户会查询几个月前的数据，如就可以按月分表。</p><p><a href="" target="_blank">2.按区间范围分表</a></p><p>一般在有严格的自增id需求上，如按照user_id水平分表：</p><p>table_1  user_id从1~100w</p><p>table_2  user_id从101~200w</p><p>table_3  user_id从201~300w</p><p>...</p><p><a href="" target="_blank">3.hash分表</a></p><p>通过一个原始目标的ID或者名称通过一定的hash算法计算出数据存储表的表名，然后访问相应的表。</p><p>按如下分10张表：</p><p>functionget_hash_table($table,$userid)</p><p>{</p><p>$str=crc32($userid);</p><p>if($str&lt;0){</p><p>$hash="0".substr(abs($str),0,1);</p><p>}else{</p><p>$hash=substr($str,0,2);</p><p>}</p><p>return$table."_".$hash;</p><p>}</p><p>echo get_hash_table('message','user18991');//结果为message_10</p><p>echo get_hash_table('message','user34523');//结果为message_13</p><p>另外，介绍我现在就是采用简单的取模分表：</p><p>/**</p><p>* @param string $table_name 表名</p><p>* @param int $user_id 用户id</p><p>* @param int $total 分表总数</p><p>* @link http://www.phpddt.com</p><p>*/</p><p>functionhash_table($table_name,$user_id,$total)</p><p>{</p><p>return$table_name.'_'.(($user_id%$total)+1);</p><p>}</p><p>echo hash_table("artice",1234,5);//artice_5</p><p>echo hash_table("artice",3243,5);//artice_4</p><p><a href="" target="_blank">4.利用merge存储引擎分表</a></p><p>感觉merge存储引擎类似sql中union的感觉，但是查询效率不高。</p><p>如下举例，拥有1000w记录的old_user表分表：</p><p><b>（1）创建new_user表使用merge存储引擎</b></p><p>mysql&gt;CREATE TABLE IF NOT EXISTS`user1`(</p><p>-&gt;`id`int(11)NOT NULL AUTO_INCREMENT,</p><p>-&gt;`name`varchar(50)DEFAULT NULL,</p><p>-&gt;`sex`int(1)NOT NULL DEFAULT'0',</p><p>-&gt;PRIMARY KEY(`id`)</p><p>-&gt;)ENGINE=MyISAMDEFAULT CHARSET=utf8 AUTO_INCREMENT=1;</p><p>QueryOK,0rows affected(0.05sec)</p><p>mysql&gt;CREATE TABLE IF NOT EXISTS`user2`(</p><p>-&gt;`id`int(11)NOT NULL AUTO_INCREMENT,</p><p>-&gt;`name`varchar(50)DEFAULT NULL,</p><p>-&gt;`sex`int(1)NOT NULL DEFAULT'0',</p><p>-&gt;PRIMARY KEY(`id`)</p><p>-&gt;)ENGINE=MyISAMDEFAULT CHARSET=utf8 AUTO_INCREMENT=1;</p><p>QueryOK,0rows affected(0.01sec)</p><p>mysql&gt;INSERT INTO`user1`(`name`,`sex`)VALUES('张映',0);</p><p>QueryOK,1row affected(0.00sec)</p><p>mysql&gt;INSERT INTO`user2`(`name`,`sex`)VALUES('tank',1);</p><p>QueryOK,1row affected(0.00sec)</p><p>mysql&gt;CREATE TABLE IF NOT EXISTS`new_user`(</p><p>-&gt;`id`int(11)NOT NULL AUTO_INCREMENT,</p><p>-&gt;`name`varchar(50)DEFAULT NULL,</p><p>-&gt;`sex`int(1)NOT NULL DEFAULT'0',</p><p>-&gt;INDEX(id)</p><p>-&gt;)TYPE=MERGE UNION=(user1,user2)INSERT_METHOD=LAST AUTO_INCREMENT=1;</p><p>QueryOK,0rows affected,1warning(0.00sec)</p><p>mysql&gt;selectid,name,sexfromnew_user;</p><p>+----+--------+-----+</p><p>|id|name|sex|</p><p>+----+--------+-----+</p><p>|1|张映|0|</p><p>|1|tank|1|</p><p>+----+--------+-----+</p><p>2rowsinset(0.00sec)</p><p>mysql&gt;INSERT INTO`new_user`(`name`,`sex`)VALUES('tank2',0);</p><p>QueryOK,1row affected(0.00sec)</p><p>mysql&gt;selectid,name,sexfromuser2</p><p>-&gt;;</p><p>+----+-------+-----+</p><p>|id|name|sex|</p><p>+----+-------+-----+</p><p>|1|tank|1|</p><p>|2|tank2|0|</p><p>+----+-------+-----+</p><p>2rowsinset(0.00sec)</p><p><b>（2）我old_user数据进行分表：</b></p><p>INSERT INTO user1(user1.id,user1.name,user1.sex)SELECT(user.id,user.name,user.sex)FROM old_userwhereuser.id&lt;=5000000</p><p>INSERT INTO user2(user2.id,user2.name,user2.sex)SELECT(user.id,user.name,user.sex)FROM old_userwhereuser.id&gt;10000000</p><p>1，做mysql集群，例如：利用mysql cluster ，mysql proxy，mysql replication，drdb等等</p><p>有人会问mysql集群，根分表有什么关系吗？虽然它不是实际意义上的分表，但是它启到了分表的作用，做集群的意义是什么呢？为一个数据库减轻负担，说白了就是减少sql排队队列中的sql的数量，举个例子：有10个sql请求，如果放在一个数据库服务器的排队队列中，他要等很长时间，如果把这10个sql请求，分配到5个数据库服务器的排队队列中，一个数据库服务器的队列中只有2个，这样等待时间是不是大大的缩短了呢？这已经很明显了。所以我把它列到了分表的范围以内，我做过一些mysql的集群：</p><p>linux mysql proxy 的安装，配置，以及读写分离</p><p>mysql replication 互为主从的安装及配置，以及数据同步</p><p>优点：扩展性好，没有多个分表后的复杂操作（php代码）</p><p>缺点：单个表的数据量还是没有变，一次操作所花的时间还是那么多，硬件开销大。</p><p>2，预先估计会出现大数据量并且访问频繁的表，将其分为若干个表</p><p>这种预估大差不差的，论坛里面发表帖子的表，时间长了这张表肯定很大，几十万，几百万都有可能。</p><p>聊天室里面信息表，几十个人在一起一聊一个晚上，时间长了，这张表的数据肯定很大。像这样的情况很多。所以这种能预估出来的大数据量表，我们就事先分出个N个表，这个N是多少，根据实际情况而定。以聊天信息表为例：</p><p>我事先建100个这样的表，message_00,message_01,message_02……….message_98,message_99.然后根据用户的ID来判断这个用户的聊天信息放到哪张表里面，你可以用hash的方式来获得，可以用求余的方式来获得，方法很多，各人想各人的吧。下面用hash的方法来获得表名：</p><p><a href="" target="_blank">复制代码</a>代码如下:</p><p><br></p><p>function get_hash_table($table,$userid) {</p><p>$str = crc32($userid);</p><p>if($str&lt;0){</p><p>$hash = "0".substr(abs($str), 0, 1);</p><p>}else{</p><p>$hash = substr($str, 0, 2);</p><p>}</p><p>return $table."_".$hash;</p><p>}</p><p>echo get_hash_table('message' , 'user18991');     //结果为message_10</p><p>echo get_hash_table('message' , 'user34523');    //结果为message_13</p><p>?&gt;</p><p>说明一下，上面的这个方法，告诉我们user18991这个用户的消息都记录在message_10这张表里，user34523这个用户的消息都记录在message_13这张表里，读取的时候，只要从各自的表中读取就行了。</p><p>优点：避免一张表出现几百万条数据，缩短了一条sql的执行时间</p><p>缺点：当一种规则确定时，打破这条规则会很麻烦，上面的例子中我用的hash算法是crc32，如果我现在不想用这个算法了，改用md5后，会使同一个用户的消息被存储到不同的表中，这样数据乱套了。扩展性很差。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

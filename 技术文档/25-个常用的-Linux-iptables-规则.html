@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>25 个常用的 Linux iptables 规则</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">25 个常用的 Linux iptables 规则</h1>
+        <div class="show-content">
+          <p>一些常用的 Linux iptables 规则，请根据自己的具体需要再修改。<br></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-bb18c18b9983985e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-bb18c18b9983985e.jpg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p># 1. 删除所有现有规则</p><p>iptables -F</p><p># 2. 设置默认的 chain 策略</p><p>iptables -P INPUT DROP</p><p>iptables -P FORWARD DROP</p><p>iptables -P OUTPUT DROP</p><p># 3. 阻止某个特定的 IP 地址</p><p>#BLOCK_THIS_IP="x.x.x.x"</p><p>#iptables -A INPUT -s "$BLOCK_THIS_IP" -j DROP</p><p># 4. 允许全部进来的（incoming）SSH</p><p>iptables -A INPUT -i eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT</p><p># 5. 只允许某个特定网络进来的 SSH</p><p>#iptables -A INPUT -i eth0 -p tcp -s 192.168.200.0/24 --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT</p><p># 6. 允许进来的（incoming）HTTP</p><p>iptables -A INPUT -i eth0 -p tcp --dport 80 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>iptables -A OUTPUT -o eth0 -p tcp --sport 80 -m state --state ESTABLISHED -j ACCEPT</p><p># 7. 多端口（允许进来的 SSH、HTTP 和 HTTPS）</p><p>iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>iptables -A OUTPUT -o eth0 -p tcp -m multiport --sports 22,80,443 -m state --state ESTABLISHED -j ACCEPT</p><p># 8. 允许出去的（outgoing）SSH</p><p>iptables -A OUTPUT -o eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>iptables -A INPUT -i eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT</p><p># 9. 允许外出的（outgoing）SSH，但仅访问某个特定的网络</p><p>#iptables -A OUTPUT -o eth0 -p tcp -d 192.168.101.0/24 --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A INPUT -i eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT</p><p># 10. 允许外出的（outgoing） HTTPS</p><p>iptables -A OUTPUT -o eth0 -p tcp --dport 443 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>iptables -A INPUT -i eth0 -p tcp --sport 443 -m state --state ESTABLISHED -j ACCEPT</p><p># 11. 对进来的 HTTPS 流量做负载均衡</p><p>#iptables -A PREROUTING -i eth0 -p tcp --dport 443 -m state --state NEW -m nth --counter 0 --every 3 --packet 0 -j DNAT --to-destination 192.168.1.101:443</p><p>#iptables -A PREROUTING -i eth0 -p tcp --dport 443 -m state --state NEW -m nth --counter 0 --every 3 --packet 1 -j DNAT --to-destination 192.168.1.102:443</p><p>#iptables -A PREROUTING -i eth0 -p tcp --dport 443 -m state --state NEW -m nth --counter 0 --every 3 --packet 2 -j DNAT --to-destination 192.168.1.103:443</p><p># 12. 从内部向外部 Ping</p><p>iptables -A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT</p><p>iptables -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT</p><p># 13. 从外部向内部 Ping</p><p>iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT</p><p>iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT</p><p># 14. 允许环回（loopback）访问</p><p>iptables -A INPUT -i lo -j ACCEPT</p><p>iptables -A OUTPUT -o lo -j ACCEPT</p><p># 15. 允许 packets 从内网访问外网</p><p># if eth1 is connected to external network (internet)</p><p># if eth0 is connected to internal network (192.168.1.x)</p><p>iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT</p><p># 16. 允许外出的  DNS</p><p>iptables -A OUTPUT -p udp -o eth0 --dport 53 -j ACCEPT</p><p>iptables -A INPUT -p udp -i eth0 --sport 53 -j ACCEPT</p><p># 17. 允许 NIS 连接</p><p># rpcinfo -p | grep ypbind ; This port is 853 and 850</p><p>#iptables -A INPUT -p tcp --dport 111 -j ACCEPT</p><p>#iptables -A INPUT -p udp --dport 111 -j ACCEPT</p><p>#iptables -A INPUT -p tcp --dport 853 -j ACCEPT</p><p>#iptables -A INPUT -p udp --dport 853 -j ACCEPT</p><p>#iptables -A INPUT -p tcp --dport 850 -j ACCEPT</p><p>#iptables -A INPUT -p udp --dport 850 -j ACCEPT</p><p># 18. 允许某个特定网络 rsync 进入本机</p><p>#iptables -A INPUT -i eth0 -p tcp -s 192.168.101.0/24 --dport 873 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 873 -m state --state ESTABLISHED -j ACCEPT</p><p># 19. 仅允许来自某个特定网络的 MySQL 的链接</p><p>#iptables -A INPUT -i eth0 -p tcp -s 192.168.200.0/24 --dport 3306 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 3306 -m state --state ESTABLISHED -j ACCEPT</p><p># 20. 允许 Sendmail 或 Postfix</p><p>iptables -A INPUT -i eth0 -p tcp --dport 25 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>iptables -A OUTPUT -o eth0 -p tcp --sport 25 -m state --state ESTABLISHED -j ACCEPT</p><p># 21. 允许 IMAP 和 IMAPS</p><p>#iptables -A INPUT -i eth0 -p tcp --dport 143 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 143 -m state --state ESTABLISHED -j ACCEPT</p><p>#iptables -A INPUT -i eth0 -p tcp --dport 993 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 993 -m state --state ESTABLISHED -j ACCEPT</p><p># 22. 允许 POP3 和 POP3S</p><p>#iptables -A INPUT -i eth0 -p tcp --dport 110 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 110 -m state --state ESTABLISHED -j ACCEPT</p><p>#iptables -A INPUT -i eth0 -p tcp --dport 995 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 995 -m state --state ESTABLISHED -j ACCEPT</p><p># 23. 防止 DoS 攻击</p><p>iptables -A INPUT -p tcp --dport 80 -m limit --limit 25/minute --limit-burst 100 -j ACCEPT</p><p># 24. 设置 422 端口转发到 22 端口</p><p>#iptables -t nat -A PREROUTING -p tcp -d 192.168.102.37 --dport 422 -j DNAT --to 192.168.102.37:22</p><p>#iptables -A INPUT -i eth0 -p tcp --dport 422 -m state --state NEW,ESTABLISHED -j ACCEPT</p><p>#iptables -A OUTPUT -o eth0 -p tcp --sport 422 -m state --state ESTABLISHED -j ACCEPT</p><p># 25. 为丢弃的包做日志（Log）</p><p>iptables -N LOGGING</p><p>iptables -A INPUT -j LOGGING</p><p>iptables -A LOGGING -m limit --limit 2/min -j LOG --log-prefix "IPTables Packet Dropped: " --log-level 7</p><p>iptables -A LOGGING -j DROP</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

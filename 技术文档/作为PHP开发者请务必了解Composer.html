@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作为PHP开发者请务必了解Composer</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">作为PHP开发者请务必了解Composer</h1>
+        <div class="show-content">
+          <p>Composer是一个非常流行的PHP包依赖管理工具,已经取代PEAR包管理器,对于PHP开发者来说掌握Composer是必须的.<br></p><p>对于使用者来说Composer非常的简单,通过简单的一条命令将需要的代码包下载到vendor目录下,然后开发者就可以引入包并使用了.</p><p>其中的关键在于你项目定义的composer.json,可以定义项目需要依赖的包(可能有多个),而依赖的包可能又依赖其他的包(这就是组件的好处),这些都不用你烦心,Composer会自动下载你需要的一切,一切在于composer.json的定义.</p><p>Composer对于使用者来说是很透明,但是其背后的理念还是需要了解一下的,其的诞生也不是偶然的,得益于Github的快速发展,PHP语言也越来越现代化,显得更高大上了.</p><p>为了理解Composer,先大概了解下其结构:</p><p>Composer的结构</p><p><b>Composer命令行工具</b>:</p><p>这个理解就比较简单了,通过使用者定义的Composer.json去下载你需要的代码,假如只是简单的使用Composer,那么掌握一些具体命令就完全可以了</p><p><b>Autoloading代码加载器</b>:</p><p>通过Composer,开发者可以通过多种方式去使用,而其中的关键在于PHP的命名空间概念,以及PSR-4标准的发展,Composer只是根据这二者开发了一个代码自动加载器</p><p><b>Github</b>:</p><p>有了Github,PHP开发人员可以将开源的代码托管在这上面,而Composer的发展源于Github,Composer本质上就是将Github上的代码下载到本地.</p><p><b>Packagist</b>:</p><p>对于使用者来说使用的是Composer的命令行工具,那么命令行工具怎么知道有多少包可以被用户使用呢,这主要就是依赖于Packagist,Packagist是Composer主要的一个包信息存储库,包开发者将具体代码托管到Github上,将包信息提交到Packagist上,这样使用者就可以通过Composer去使用.</p><p>Composer根据本地定义的composer.json信息去查询Packagist,Packagist根据Composer.json/Package.json信息解析,最终对应到github仓库,Composer最终下载代码的时候还要依赖于Github仓库上的Composer.json,这里涉及到三种类型的composer.json,含义是不一样的.</p><p><b>Composer.json</b>:</p><p>这是Composer的核心,是Composer的规则,上面也提到了三种类型的Composer.json,在使用的时候一定要注意区分,我初学的时候就总是搞乱.</p><p>Composer命令行工具</p><p><b>composer init</b></p><p>使用者可以在自己的项目下创建composer.json以便定义你项目的依赖包,也可以通过composer init交互式的创建composer.json.</p><p><b>composer install</b></p><p>应该是最常用的命令,composer会根据本地的composer.json安装包,将下载的包放入项目下的vendor目录下,同时将安装时候的包版本信息放入到composer.lock,以便锁定版本.</p><p>其实在install的时候,假如发现composer.lock版本和目前vendor目录下的代码版本是一致的,则Composer会什么也不做,composer.lock的目的就是让你安心在目前这个版本下工作,而不获取最新版本的包.</p><p><b>composer update</b></p><p>那么如何更新composer.lock以便获取到最新版本的包呢?通过这个命令即可更新最新版本的包</p><p><b>composer config</b></p><p>这个命令还是建议了解下,全局的配置保存在COMPOSER_HOME/config.json,非全局的配置信息则存储在本项目目录下.</p><p>composer config --list -g</p><p>composer config -g notify-on-install false</p><p>composer global config bin-dir --absolute</p><p><b>composer create-project</b></p><p>这个命令不常用,但是个人觉得还是很重要的,使用普通的install命令是将项目所有的依赖包下载到本项目vendor目录下.而通过这个命令则是将所有的代码及其依赖的包放到一个目录下,相当于执行了一个git clone命令,一般是包的开发者可能为了修复bug会使用该命令.</p><p><b>composer global</b></p><p>这是一个全局的安装命令,它允许你在COMPOSER_HOME目录下执行Composer的命令,比如install,update.当然你的COMPOSER_HOME要在$PATH环境下.</p><p>比如执行composer global require fabpot/php-cs-fixer,现在php-cs-fixer命令行可以全局运行了,如果稍后想更新它,只需要运行composer global update</p><p><b>composer dump-autoload</b></p><p>当你修改项目下的composer.json的文件,并不一定要运行composer update命令进行更新,有的时候可以使用该命令来更新加载器,比如你要引用本地自定义的包(不是来自于packagist),后面会通过实践来说明该命令.</p><p><b>composer require</b></p><p>假如手动或者交互式创建composer.json文件,可以直接使用该命令来安装包</p><p>composer require  cerdic/css-tidy:1.5.2</p><p>composer require "ywdblog/phpcomposer:dev-master"</p><p><b>–prefer-source和–prefer-dist参数</b></p><p>–prefer-dist:对于稳定的包来说,一般Composer安装默认使用该参数,这也能加快安装,比如有可能直接从packagist安装了相应的包,而不用实际去Github上下载包.</p><p>–prefer-source:假如使用该参数,则会直接从Github上安装,安装包后vendor目录下还含有.git信息</p><p>composer require "ywdblog/phpcomposer:dev-master" --prefer-source</p><p>#在vendor/ywdblog/phpcomposer目录下含有.git信息</p><p>#在vendor/ywdblog/phpcomposer目录下含有.git信息</p><p><b>如何给Composer添加代理</b></p><p>在国内使用Composer下载特别慢,可以通过二个方法进行加速</p><p>composer config repo.packagist composer “<a href="https://packagist.phpcomposer.com/" target="_blank">https://packagist.phpcomposer.com</a>“</p><p>编辑composer.json</p><p>"repositories": {</p><p>"packagist": {</p><p>"type": "composer",</p><p>"url": "https://packagist.phpcomposer.com"</p><p>}</p><p>}</p><p>Autoloading代码加载器</p><p>composer本身集成一个autoloader,支持PSR-4,PSR-0,classmap,files autoloading.</p><p>这里通过一个例子来说明通过Composer如何引用classmap,files,本地符合PSR-4标准的代码</p><p>编辑<a href="https://github.com/ywdblog/mycode/blob/master/composer/composer.json" target="_blank">composer.json</a></p><p>"autoload": {</p><p>"classmap": ["othsrc/","classsrc.php"],</p><p>"files": ["othsrc/filesrc.php"],</p><p>"psr-4": {"Foo\Bar\": "src"}</p><p>}</p><p>composer dump-autoload</p><p>通过上述的操作,对于PSR-4来说等同注册了一个PSR-4 autoloader(从FooBar命名空间)</p><p>假如不想使用Composer的autoloader,可以直接包含vendor/composer/autoload_*.php文件,配置自己的加载器.</p><p>具体的例子托管在<a href="https://github.com/ywdblog/mycode/tree/master/composer" target="_blank">github</a>上,可参考.</p><p>Repositories</p><p>关于Repositories,了解其不是必须的,但是假如掌握则更能理解Composer,对于Repositories,其<a href="http://docs.phpcomposer.com/05-repositories.html" target="_blank">中文文档</a>和<a href="https://getcomposer.org/doc/05-repositories.md" target="_blank">英文文档</a>解释的很好,这里也进行了一些<b>摘抄</b>.</p><p><b>基本概念</b></p><p>包:</p><p>Composer是一个依赖管理工具,它在本地安装一些资源包和包的描述(比如包名称和对应的版本),比较重要的元数据描述是dist和source,dist指向一个存档,该存档是对一个资源包的某个版本的数据进行的打包.source指向一个开发中的源,这通常是一个源代码仓库(比如git)</p><p>资源库:</p><p>一个资源库是一个包的来源.它是一个packages/versions的列表.</p><p>Composer将查看所有你定义的repositories以找到项目需要的资源包(这句话很重要).</p><p>默认情况下已经将Packagist.org注册到Composer(或者理解为Packagist.org是Composer资源库默认的仓库类型)</p><p><b>Composer资源库类型</b></p><p>Composer资源库包括四种类型,默认的是composer类型,也就是packagist.org所使用的资源类型.</p><p>它使用一个单一的packages.json文件,包含了所有的资源包元数据.当你将包发布到pckagist.org上,则默认系统会创建一个packages.json,不过我没有找到<a href="https://packagist.org/packages/ywdblog/phpcomposer" target="_blank">我的包</a>对应的文件.</p><p><b>VCS资源库类型</b></p><p>假如你想构建一个私有的Composer私有资源库类型,可以使用该类型,这里举一个例子,比如你在自己项目的composer.json定义如下,则就可以使用对应的Github上的代码了.</p><p>{</p><p>"repositories": [</p><p>{</p><p>"type": "vcs",</p><p>"url": "https://github.com/ywdblog/phpcomposer"</p><p>}</p><p>],</p><p>"require": {</p><p>"ywdblog/phpcomposer": "dev-master"</p><p>}</p><p>}</p><p>当运行composer update的时候,Comoser实际上是从Github上下载包而不是从pckagist.org上下载.</p><p>另外假如需要使用Package资源库类型或者PEAR资源库类型,参考官方文档即可,一般在composer.json中定义name、version属性即可.</p><p>Composer.json</p><p>在本文上面也多次提到了composer.json,比如你希望使用第三方包则需要在本地定义composer.json,Composer安装第三方包后,也会在第三方包目录下发现composer.json,那么这二者都叫composer.json,有什么区别呢?理解这非常的重要.</p><p>假如你在自己的项目下面定义一个composer.json,则这个包称之为ROOT包,这个composer.json定义你项目需要的条件(比如你的项目可能依赖一个第三方包).</p><p>composer.json中有些属性只能被ROOT包使用,比如config属性只在ROOT包中生效.</p><p>一个资源包是不是ROOT包,取决于它的上下文,比如你git clone ywdblog/phpcomposer,则这时候本地phpcomposer目录就是ROOT包,假如你在本地phpcomposer目录下composer require ywdblog/phpcomposer,则这时候你的项目phpcomposer就是ROOT包.</p><p>了解composer-schema.json可<a href="https://github.com/composer/composer/blob/master/res/composer-schema.json" target="_blank">参考该网址</a>,Laravel作为一个成熟的框架,其定义的<a href="https://github.com/laravel/laravel/blob/master/composer.json" target="_blank">composer.json</a>非常经典</p><p><b>关于包的版本</b></p><p>当使用者在本地配置composer.json的时候,可以指定需要包的特定版本,Composer支持从Github仓库中下载Tag或者分支下的包.</p><p>对于Github上的Tag来说,Packagist会创建对应包的版本,它符合X.Y.Z,vX.Y.Z,X.Y.Z-包类型,就是说Github上虽然只有一个特定版本的包,但Composer支持多种形式的引用方式,比如:</p><p>composer require monolog/monolog  1.0.0-RC1</p><p>composer require monolog/monolog  v1.0.0-RC1</p><p>composer require monolog/monolog  1.0.*</p><p>composer require monolog/monolog  ~1.10</p><p>对于Github上的分支来说,Packagist会创建对应包的版本,假如分支名看起来像一个版本,将创建{分支名}-dev的包版本号,如果分支名看起来不像一个版本号,它将会创建dev-{分支名}形式的版本号</p><p>composer require monolog/monolog  master-dev</p><p>composer require monolog/monolog  master.x-dev</p><p>总结:</p><p>理解Composer,最重要的是实践,最后也能明白PSR-4和命名空间,也可以尝试将你的项目发布到pckagist.org上</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

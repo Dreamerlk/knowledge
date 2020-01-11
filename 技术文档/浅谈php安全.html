@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浅谈php安全</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">浅谈php安全</h1>
+        <div class="show-content">
+          <p>这段时间一直在写一个整站，前几天才基本完成了，所以抽个时间写了一篇对于php安全的总结。技术含量不高，过不了也没关系，希望能一些准备写网站的朋友一点引导。<br></p><p>在放假之初，我抽时间看了《白帽子讲web安全》，吴翰清基本上把web安全中所有能够遇到的问题、解决思路归纳总结得很清晰，也是我这一次整体代码安全性的基石。</p><p>我希望能分如下几个方面来分享自己的经验</p><p>把握整站的结构，避免泄露站点敏感目录</p><p>在写代码之初，我也是像很多老源码一样，在根目录下放上index.php、register.php、login.php，用户点击注册页面，就跳转到http://localhost/register.php。并没有太多的结构的思想，像这样的代码结构，最大的问题倒不是安全性问题，而是代码扩展与移植问题。</p><p>在写代码的过程中，我们常要对代码进行修改，这时候如果代码没有统一的一个入口点，我们可能要改很多地方。后来我读了一点emlog的代码，发现网站真正的前端代码都在模板目录里，而根目录下就只有入口点文件和配置文件。这才顿悟，对整个网站的结构进行了修改。</p><p>网站根目录下放上一个入口点文件，让它来对整个网站所有页面进行管理，这个时候注册页面变成了http://localhost/?act=register，任何页面只是act的一个参数，在得到这个参数后，再用一个switch来选择要包含的文件内容。在这个入口点文件中，还可以包含一些常量的定义，比如网站的绝对路径、网站的地址、数据库用户密码。以后我们在脚本的编写中，尽量使用绝对路径而不要使用相对路径（否则脚本如果改变位置，代码也要变），而这个绝对路径就来自入口点文件中的定义。</p><p>当然，在安全性上，一个入口点文件也能隐藏后台地址。像这样的地址http://localhost/?act=xxx不会暴露后台绝对路径，甚至可以经常更改，不用改变太多代码。一个入口点文件也可以验证访问者的身份，比如一个网站后台，不是管理员就不允许查看任何页面。在入口点文件中就可以验证身份，如果没有登录，就输出404页面。</p><p>有了入口点文件，我就把所有非入口点文件前面加上了这句话：</p><p>php if(!defined('WWW_ROOT')) {header("HTTP/1.1 404 Not Found"); exit;} ?&gt;</p><p>WWW_ROOT是我在入口点中定义的一个常量，如果用户是通过这个页面的绝对路径访问（http://localhost/register.php），我就输出404错误；只有通过入口点访问（http://localhost/?act=register），才能执行后面的代码。</p><p>使用预编译语句，避免sql注入</p><p>注入是早前很大的一个问题，不过近些年因为大家比较重视这个问题，所以慢慢变得好了很多。</p><p>吴翰清在web白帽子里说的很好，其实很多漏洞，像sql注入或xss，都是将“数据”和“代码”没有区分开。“代码”是程序员写的内容，“数据”是用户可以改变的内容。如果我们写一个sql语句select</p><p>* from admin where username='admin' password='xxxxx',</p><p>admin和xxxxx就是数据，是用户输入的用户名和密码，但如果没有任何处理，用户输入的就可能是“代码”，比如'or</p><p>''='，这样就造成了漏洞。“代码”是绝对不能让用户接触的。</p><p>在php中，对于mysql数据库有两个模块，mysql和mysqli，mysqli的意思就是mysql</p><p>improve。mysql的改进版，这个模块中就含有“预编译”这个概念。像上面那个sql语句，改一改：select * from admin</p><p>where username='?'</p><p>password='?'，它就不是一个sql语句了，但是可以通过mysqli的预编译功能先把他编译成stmt对象，在后期用户输入账号密码后，用stmt-&gt;bind_param将用户输入的“数据”绑定到这两个问号的位置。这样，用户输入的内容就只能是“数据”，而不可能变成“代码”。</p><p>这两个问号限定了“数据”的位置，以及sql语句的结构。我们可以把我们所有的数据库操作都封装到一个类中，所有sql语句的执行都进行预编译。这样就完全避免了sql注入，这也是吴翰清最推荐的解决方案。</p><p>下面是使用mysqli的一些代码部分(所有的判断函数运行成功或失败的代码我都省略了，但不代表不重要)：</p><p>php</p><p>//用户输入的数据</p><p>$name = 'admin';</p><p>$pass = '123456';</p><p>//首先新建mysqli对象,构造函数参数中包含了数据库相关内容。</p><p>$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);</p><p>//设置sql语句默认编码</p><p>$this-&gt;mysqli-&gt;set_charset("utf8");</p><p>//创建一个使用通配符的sql语句</p><p>$sql = 'SELECT user_id FROM admin WHERE username=? AND password=?;';</p><p>//编译该语句，得到一个stmt对象.</p><p>$stmt = $conn-&gt;prepare($sql);</p><p>/********************之后的内容就能重复利用，不用再次编译*************************/</p><p>//用bind_param方法绑定数据</p><p>//大家可以看出来，因为我留了两个?，也就是要向其中绑定两个数据，所以第一个参数是绑定的数据的类型(s=string,i=integer)，第二个以后的参数是要绑定的数据</p><p>$stmt-&gt;bind_param('ss', $name, $pass);</p><p>//调用bind_param方法绑定结果（如果只是检查该用户与密码是否存在，或只是一个DML语句的时候，不用绑定结果）</p><p>//这个结果就是我select到的字段，有几个就要绑定几个</p><p>$stmt-&gt;bind_result($user_id);</p><p>//执行该语句</p><p>$stmt-&gt;execute();</p><p>//得到结果</p><p>if($stmt-&gt;fetch()){</p><p>echo '登陆成功';</p><p>//一定要注意释放结果资源，否则后面会出错</p><p>$stmt-&gt;free_result();</p><p>return $user_id; //返回刚才select到的内容</p><p>}else{echo '登录失败';}</p><p>?&gt;</p><p>预防XSS代码，如果不需要使用cookie就不使用</p><p>在我的网站中并没有使用cookie，更因为我对权限限制的很死，所以对于xss来说危险性比较小。</p><p>对于xss的防御，也是一个道理，处理好“代码”和“数据”的关系。当然，这里的代码指的就是javascript代码或html代码。用户能控制的内容，我们一定要使用htmlspecialchars等函数来处理用户输入的数据，并且在javascript中要谨慎把内容输出到页面中。</p><p>限制用户权限，预防CSRF</p><p>现在脚本漏洞比较火的就是越权行为，很多重要操作使用GET方式执行，或使用POST方式执行而没有核实执行者是否知情。</p><p>CSRF很多同学可能比较陌生，其实举一个小例子就行了：</p><p>A、B都是某论坛用户，该论坛允许用户“赞”某篇文章，用户点“赞”其实是访问了这个页面：http://localhost/?act=support&amp;articleid=12。这个时候，B如果把这个URL发送给A，A在不知情的情况下打开了它，等于说给articleid=12的文章赞了一次。</p><p>所以该论坛换了种方式，通过POST方式来赞某篇文章。</p><p> action="http://localhost/?act=support" method="POST"&gt;</p><p> type="hidden" value="12" name="articleid"&gt;</p><p> type="submit" value="赞"&gt;</p><p></p><p>可以看到一个隐藏的input框里含有该文章的ID，这样就不能通过一个URL让A点击了。但是B可以做一个“极具诱惑力”的页面，其中某个按钮就写成这样一个表单，来诱惑A点击。A一点击，依旧还是赞了这篇文章。</p><p>最后，该论坛只好把表单中增加了一个验证码。只有A输入验证码才能点赞。这样，彻底死了B的心。</p><p>但是，你见过哪个论坛点“赞”也要输入验证码？</p><p>所以吴翰清在白帽子里也推荐了最好的方式，就是在表单中加入一个随机字符串token（由php生成，并保存在SESSION中），如果用户提交的这个随机字符串和SESSION中保存的字符串一致，才能赞。</p><p>在B不知道A的随机字符串时，就不能越权操作了。</p><p>我在网站中也多次使用了TOKEN，不管是GET方式还是POST方式，通常就能抵御99%的CSRF估计了。</p><p>严格控制上传文件类型</p><p>上传漏洞是很致命的漏洞，只要存在任意文件上传漏洞，就能执行任意代码，拿到webshell。</p><p>我在上传这部分，写了一个php类，通过白名单验证，来控制用户上传恶意文件。在客户端，我通过javascript先验证了用户选择的文件的类型，但这只是善意地提醒用户，最终验证部分，还是在服务端。</p><p>白名单是必要的，你如果只允许上传图片，就设置成array('jpg','gif','png','bmp')，当用户上传来文件后，取它的文件名的后缀，用in_array验证是否在白名单中。</p><p>在上传文件数组中，会有一个MIME类型，告诉服务端上传的文件类型是什么，但是它是不可靠的，是可以被修改的。在很多存在上传漏洞的网站中，都是只验证了MIME类型，而没有取文件名的后缀验证，导致上传任意文件。</p><p>所以我们在类中完全可以忽略这个MIME类型，而只取文件名的后缀，如果在白名单中，才允许上传。</p><p>当然，服务器的解析漏洞也是很多上传漏洞的突破点，所以我们尽量把上传的文件重命名，以“日期时间+随机数+白名单中后缀”的方式对上传的文件进行重命名，避免因为解析漏洞而造成任意代码执行。</p><p>加密混淆javascript代码，提高攻击门槛</p><p>很多xss漏洞，都是黑客通过阅读javascript代码发现的，如果我们能把所有javascript代码混淆以及加密，让代码就算解密后也是混乱的（比如把所有变量名替换成其MD5 hash值），提高阅读的难度。</p><p>使用更高级的hash算法保存数据库中重要信息</p><p>在这个硬盘容量大增的时期，很多人拥有很大的彩虹表，再加上类似于cmd5这样的网站的大行其道，单纯的md5已经等同于无物，所以我们迫切的需要更高级的hash算法，来保存我们数据库中的密码。</p><p>所以后来出现了加salt的md5，比如discuz的密码就是加了salt。其实salt就是一个密码的“附加值”，比如A的密码是123456，而我们设置的salt是abc,这样保存到数据库的可能就是md5('123456abc')，增加了破解的难度。</p><p>但是黑客只要得知了该用户的salt也能跑md5跑出来。因为现在的计算机的计算速度已经非常快了，一秒可以计算10亿次md5值，弱一点的密码分把钟就能跑出来。</p><p>所以后来密码学上改进了hash，引进了一个概念：密钥延伸。说简单点就是增加计算hash的难度（比如把密码用md5()函数循环计算1000次），故意减慢计算hash所用的时间，以前一秒可以计算10亿次，改进后1秒只能计算100万次，速度慢了1000倍，这样，所需的时间也就增加了1000倍。</p><p>那么对于我们，怎么使用一个安全的hash计算方法？大家可以翻阅emlog的源码，可以在include目录里面找到一个HashPaaword.php的文件，其实这就是个类，emlog用它来计算密码的hash。</p><p>这个类有一个特点，每次计算出的hash值都不一样，所以黑客不能通过彩虹表等方式破解密码，只能用这个类中一个checkpassword方法来返回用户输入密码的正确性。而该函数又特意增加了计算hash的时间，所以黑客很难破解他们拿到的hash值。</p><p>在最新的php5.5中，这种hash算法成为了一个正式的函数，以后就能使用该函数来hash我们的密码了。</p><p>验证码安全性</p><p>这是我刚想到的一点，来补充一下。</p><p>验证码通常是由php脚本生成的随机字符串，通过GD库的处理，制作成图片。真正的验证码字符串保存在SESSION中，然后把生成的图片展示给用户。用户填写了验证码提交后，在服务端上SESSION中的验证码进行比对。</p><p>由此想到了我之前犯过的一个错误。验证码比对完成之后，不管是正确还是错误，我都没有清理SESSION。这样产生了一个问题，一旦一个用户第一次提交验证码成功，第二次以后不再访问生成验证码的脚本，这时候SESSION中的验证码并没有更新，也没有删除，导致验证码重复使用，起不到验证的作用。</p><p>再就说到了验证码被识别的问题，wordpress包括emlog的程序我经常会借鉴，但他们所使用的验证码我却不敢恭维。很多垃圾评论都是验证码被机器识别后产生的，所以我后来也使用了一个复杂一点的验证码，据说是w3c推荐使用的。</p><p>如果大家需要，可以到这里下载<a href="http://pan.baidu.com/s/1bnb8Zmf" target="_blank">http://pan.baidu.com/s/1bnb8Zmf</a></p><p>好了，我能想到的，也是在实际运用中用到的东西也就这么多了。这也仅仅是我自己写代码中积累的一些对代码安全性的一个见解，如果大家还有更好的想法，可以和我交流。希望大家也能写出更安全的代码。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

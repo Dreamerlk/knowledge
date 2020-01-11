@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>比特币分叉的那些事</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">比特币分叉的那些事</h1>
+        <div class="show-content">
+          <br><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-699bcfdc554cac1b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-699bcfdc554cac1b.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>前言：比特币是一个诞生了八年之久的活的很长很长的市值超过百亿美元的众多人为之疯狂神奇东西（注意，根据央妈的指示，比特币不是货币）。最近，有人预测，比特币到了不得不分叉的时候，可能会暴跌之类的。<br></p><p><b>一：中本聪拍了下脑袋</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-2eea5b133b0b36c3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-2eea5b133b0b36c3.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>中本聪在设计比特币的时候，是8年前，那个时候数据能有多少？更何况也没有多少人使用比特币。于是一拍脑袋，定了，比特币一个区块就1M吧。而一笔交易是250字节甚至更多，现在一些交易基本达到了500字节。不够用啊！</p><p><b>我们来算笔账：</b></p><p>比特币一个区块的容量是1M</p><p>1M=1024KB=1024×1024=<a href="tel:1048576" target="_blank">1048576</a>字节</p><p>用比特币一个区块的总容量<a href="tel:1048576" target="_blank">1048576</a>字节÷250个字节≈4194.3笔交易</p><p>比特币一个区块确认的时间是10分钟</p><p>10分钟=10×60=600秒</p><p>那么用交易的总笔数4194.3÷600≈6.99个</p><p>也就是说，比特币区块链每秒只能处理7笔交易，要是交易数据再大点，可能连7秒都达不到。而根据某宝铺天盖地的双十一PR稿，支付宝一秒处理12万笔交易。嗯......看来我不用再说了。</p><p>这样会造成一个结果，比特币上的交易又堵又慢。一笔交易发生之后，前面堵着好多交易都等着确认，什么时候会轮到你啊？总有一天堵塞到一定程度就会超过容量极限，然后，Duang~~，炸了！</p><p><b>二：后宫众妃开始争宠</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-adcf3d6fc1bd68ea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-adcf3d6fc1bd68ea.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>出了问题怎么办呢？改啊！</p><p>怎么改啊？找爸爸啊！</p><p>爸爸在哪啊？爸爸中本聪消失了啊！</p><p>那找谁啊？中本聪把系统维护交给了5个极客！</p><p>哦，怎么改啊？</p><p>.........................寂静.............................</p><p>听我的，改成2M，不，听我的，改成20M！</p><p><b>很多人代表各方的利益群体提出了自己的扩容方案！</b></p><p>Bitcoin Classic认为应该将这个字段的最大值调到2M，并且以后有计划取前2016个区块大小的中位数再乘一个约定好的倍数来决定下一批区块的大小上限。</p><p>Bitcoin XT认为这个值应该修改为20M，并且每两年翻一倍，直到上限值达到8.3G。</p><p>Bitcoin Unlimited更狠，他认为这个值多大都行可以无限大，由矿池决定自己打包多大。</p><p>.........................再次寂静....................</p><p>每个人都觉得自己是对的，谁也说服不了谁怎么办啊？比特币不升级了？不行啊，还是要升级的！那么问题就来了，要是做出来一个升级版本，所有人都直接升级成了新版，就没有什么分叉不分叉了，全世界人大升级大和谐啊。但是，有人的地方就有纷争，更何况这不合都摆在明面上了，有的人升级，有的不升级。这可好了，乱套了，用的系统都不一样，那还是“一国”的了吗？</p><p>于是，因为不同的理念催生出了N种扩容方案，各个方案间无法统一，这下好了，”后宫“，乱套了“，比特币，分叉了。其实，我真心觉得以上那几种方案是随着时间的增长，提出的容量大小也随之增长，莫非，这不是价值观的原因而是世界观的原因？</p><p><b>三：硬分叉和软分叉怎么回事？</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-01ae7b8c0366e155.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-01ae7b8c0366e155.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>分叉就分叉了呗，怎么还分软硬呢？简单来说就是兼容性得到不同，软分叉是暂时的，硬分叉是永久的。下面为了避免我解释错了，毕竟不是学技术出身的，我们把网上的官方资料先甩出来给你看看，然后再来说说我举的那些被各种技术批不严谨的N版例子。</p><p><b>硬分叉的定义是这样的：</b></p><p>A</p><p>permanent divergence in the the block chain, commonly occurs when</p><p>non-upgraded nodes can’t validate blocks created by upgraded nodes that</p><p>follow newer consensus rules.</p><p>区块链发生永久性分歧，在新共识规则发布后，部分没有升级的节点无法验证已经升级的节点生产的区块，通常硬分叉就会发生。</p><p><b>官方解释是这样的：</b>硬分叉是指比特币区块格式或交易格式（这就是广泛流传的“共识”）发生改变时，未升级的节点拒绝验证已经升级的节点生产出的区块，不过已经升级的节点可以验证未升级节点生产出的区块，然后大家各自延续自己认为正确的链，所以分成两条链。</p><p><b>软分叉的定义是这样的：</b></p><p>A</p><p>temporary fork in the block chain which commonly occurs when miners</p><p>using non-upgraded nodes violate a new consensus rule their nodes don’t</p><p>know about.</p><p>当新共识规则发布后，没有升级的节点会因为不知道新共识规则下，而生产不合法的区块，就会产生临时性分叉。</p><p><b>官方解释是这样的：</b></p><p>软分叉是指比特币交易的数据结构（这就是被广泛流传的“共识”）发生改变时，未升级的节点可以验证已经升级的节点生产出的区块，而且已经升级的节点也可以验证未升级的节点生产出的区块。</p><p><b>两者的官方特点这样的：</b></p><p>硬分叉：没有向前兼容性，之前的版本将不可再用，需要强制升级。</p><p>软分叉：有较好的兼容性，之前版本至少部分功能可用，可不升级。</p><p>硬分叉：在区块链层面会有分叉的两条链，一条原旧链，一条分叉新链。</p><p>软分叉：在区块链层面没有分叉的链，只是组成链的区块，有新区块和旧区块。</p><p>硬分叉：需要在某个时间点全部同意分叉升级，不同意的将会进入原旧链。</p><p>软分叉：相当长的时间里，可允许不进行升级，继续使用原版本生成旧区块，与新区块并存。</p><p><b>四：举几个说人话的例子</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-71811d70aa77ae2c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-71811d70aa77ae2c.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>是不是第一次没看懂（程序员们不要说话）？我第一次也没看懂。接下来，我们来聊一聊那些被嫌弃的例子，就是那些老子写在漫画脚本里，删改了无数次依然没用的那种退稿，嗯，大家意会不要深究，毕竟这是被批不严谨的例子，看看就好。</p><p><b>例子第一版：</b></p><p>1.</p><p>当一部分人选择升级，而另一部分人选择不升级，新版本的比特币系统就是不兼容的。我们举个极端情况下的例子来解释下这个由新版本比特币系统兼容性的问题牵扯出的硬分叉和软分叉。在比特币的王国里，有两个流派，小白派同意了升级，小黑派是保守派，他们不允许比特币有一丝一毫的更改，坚决不同意升级，并沿用之前的版本。那么如何解决谁是正统问题就会出现2种情况。</p><p>2.</p><p>硬分叉：硬分叉就是指两个流派谁也说不听谁，于是干脆直接的各自为政，每个人都领一伙人单干。表现在比特币就会出现两种币种，一个叫BTC、一个叫BU。两种币种，自成系统，据统计，现在BU已经拉拢了35%的旷工来和他们一起“起义”，一旦“起义”成功。除非有一方说服了另一方所有的人舍弃自己的币种加入对方的阵营就绝无再次统一的可能。</p><p>3.</p><p>软分叉：软分叉就是指两个流派意见不合，于是他们采用了选举制的手段来说明哪种是正统，也就是比特币系统中各方拉拢的矿工的算力，大家约定一个数值，谁能拉拢到超过某个百分比的算力谁就是正统。也就是说，软分叉是暂时的。</p><p>某BOSS评论：你这个原理都是错的啊！哦.......</p><p><b>例子第二版：</b></p><p>1.</p><p>我们模拟一种极端的情况，抽象出一个比特币王国来解释所谓的新系统的兼容性的问题。在遥远的岛上，有一个比特币的王国里，大家安详的生活了很多年，但突然有一天起，有人觉得比特币王国的运转规则需要更改一个新的，一派的人同意了升级，另一派的人是保守派，他们不允许比特币王国有一丝一毫的更改，坚决不同意升级，并沿用之前的运转规则。</p><p>2.</p><p>硬分叉会出现什么结果呢？两个流派观点不一，无法统一，于是干脆直接的各自为政，每个人都领一拨人按照他们认可的运转规则继续生活。表现在比特币上就是从新的节点开始分成了2条链，也就是网上热议的两种币种，一个叫BTC、一个叫BU。两种币种，自成系统，据统计，现在BU已经拉拢了35%的旷工。</p><p>3.</p><p>软分叉会出现什么结果呢？两个流派虽然意见不合，但是他们选择了相对比较温和的办法，新的运转规则与旧的运转规则共存。表现在比特币上就是未升级的节点按照以前的规则继续算，但已经升级的节点仍然按照扩容后的规则计算。</p><p>某BOSS评论：你这个软分叉解释的貌似有点不严谨啊！哦.......</p><p><b>例子第三版：</b></p><p>1.</p><p>我们模拟一种极端的情况，抽象出一个比特币王国来解释所谓的新系统的兼容性的问题。在遥远的岛上，有一个比特币的王国里，大家安详的生活了很多年，王国设施因为陈旧，有一些这样那样的问题。于是大家开始讨论如何解决设施陈旧的问题。</p><p>2.</p><p>有人觉得应该推翻了重新修葺，并且上书了一本《如何建造一个华丽的王国》的奏书，里面有九九八十一种推翻重建的方案。有些人认为补补窟窿，刷刷墙还是勉强可以看，根本不用大动干戈。两派人争论不休，无法达成一致，这就引起了分叉。</p><p>3.</p><p>什么情况下会出现硬分叉呢？派系争论不休，于是开始各干各的。提议推翻装修的人雇了几十个民工，新的建筑焕然一新，王国里出现一部分新的，一部分旧的建筑物的时候，风格相当不统一。这就相当于比特币世界里的硬分叉，表现在比特币世界里就是从新的节点开始，分成了两条链，旧链和新链。两条链互不兼容。BTC、BU、BCC或者BTC1、BTC2、BTC3就这样诞生了。</p><p>4.</p><p>软分叉会出现什么结果呢？派系争论不休，但要求重建的一派有了妥协的意愿，同意让装修装饰派试一试他们的方案。于是装修队开始对墙上的破洞进行修补，把陈旧的颜色换成鲜艳的颜色。这时，王国里正常的生活仍然在继续。新旧面貌共存。表现在比特币上就是未升级的节点按照以前的规则继续算，但已经升级的节点仍然按照扩容后的规则计算。因此，Core主张的Segwit升级后，BTC依旧是BTC，不会有新的币种诞生。</p><p>某BOSS评论：我没问，反正也不让用.......不听不听我不听.......</p><p><b>五：有什么影响吗？</b></p><p>说到影响这里，我们看下进来比较成功的一次分叉。</p><p>2016年7月</p><p>以太坊开发团队通过修改以太坊软件的代码，在第<a href="tel:1920000" target="_blank">1920000</a>区块</p><p>强行把The DAO及其子DAO的所有资金全部转到一个特定的退款合约地址</p><p>从而“夺回”黑客所控制的DAO合约的币。</p><p>之后，形成两条链，一条为原链（ETC），一条为新的分叉链（ETH），以太坊成功的硬分叉了！</p><p><b>硬分叉对比特币矿工的影响：</b></p><p>硬分叉这事能闹起来，矿工绝对出了挺大力气，分叉了，矿工挖矿简单了，可以挖到更多币了，开心啊，但是，他挖出来币值不值钱还是看有没有人买，毕竟市场决定价格。</p><p><b>硬分叉对比特币产业链的影响：</b></p><p>从技术角度来看，硬分叉的主要问题是它需要所有用户转移到具有不同规则的新区块链。那么为了保有比特币的品牌价值，和对比特币的信仰，比特币的支持者是反对硬分叉的。如果真的硬分叉，将会掀起一场彻底的网络战和舆论战。</p><p><b>硬分叉对币价的影响：</b></p><p>再说一句，比特币分叉后比特币的币价会涨会跌，前景究竟会如何发展，是由市场的选择决定。按常理来看，估计分叉后比特币会先暴跌一场，然后分叉后的两个币种经过时间的洗礼后会渐渐回归理性，毕竟分叉后的1+1肯定不等于2。</p><p>结语：比特币分叉，是一个一旦开始就仿佛永不会落幕的会议，但这也正是去中心化的比特币的魅力之所在。分叉后到底会怎么走，你也就不要再瞎猜了，毕竟，现在连比特币究竟会不会硬分叉还没讨论出来了..............</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

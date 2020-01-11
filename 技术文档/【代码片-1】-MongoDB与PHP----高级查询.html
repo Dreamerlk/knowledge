@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【代码片-1】 MongoDB与PHP -- 高级查询</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">【代码片-1】 MongoDB与PHP -- 高级查询</h1>
+        <div class="show-content">
+          <p></p><pre name="code" class="php">/*<br></pre><p></p><p>* $gt --- 大于</p><p>* $lt --- 小于</p><p>* $gte --- 大于或等于</p><p>* $lte --- 小于或等于</p><p>*</p><p>* $ne --- 不等于</p><p>* $in --- 在其中</p><p>* $nin --- 不在其中</p><p>*</p><p>* $mod --- 取模</p><p>* $all --- 存在所有值</p><p>* $size --- 匹配元素数量</p><p>* $exists --- 判断一个元素是否存在</p><p>* $type --- 匹配元素类型</p><p>* $not --- 取反</p><p>*</p><p>* $slice --- 返回数组的子集合</p><p>* $where --- 可以执行任何JavaScript作为查询的一部分</p><p>*</p><p>* $set --- 修改器</p><p>* $unset --- 删除键</p><p>* $inc --- 自增或自减(只能为数字)</p><p>* $upsert --- 如果没有查询到数据，就会以查询条件与数据为基础，新建一个记录</p><p>*</p><p>* 数组修改器</p><p>* $push --- 数组末尾插入元素</p><p>* $addToSet --- 插入元素,避免重复</p><p>* $each ---</p><p>* $pop --- 从数组任何一端删除元素</p><p>* $pull --- 根据特定条件删除元素</p><p>*/</p><p>//创建连接</p><p>$conn=newMongo();</p><p>//选择数据库</p><p>$coll=$conn-&gt; ceshi -&gt; user;</p><p>//No.01: 大于($gt)、小于($lt)、大于或等于($gte)、小于或等于($lte)</p><p>//eg: "age" 大于2 小于等于10的文档</p><p>$coll-&gt; find(array('age'=&gt;array('$gt'=&gt; 2,'$lte'=&gt; 10)));</p><p>//No.02: 不等于($ne)、在其中($in)、不在其中($nin)</p><p>//eg: "age" 不等于 5</p><p>$coll-&gt; find(array('age'=&gt;array('$ne'=&gt; 5)));</p><p>//eg: "age" 是5或者6的记录</p><p>$coll-&gt; find(array('age'=&gt;array('$in'=&gt;array(5, 6))));</p><p>//No.03: 取模($mod)</p><p>//eg: "age" % 10 == 1</p><p>$coll-&gt; find(array('age'=&gt;array('$mod'=&gt;array(10, 1))));</p><p>//No.04: 存在所有值($all)</p><p>//eg: 用户身份"groupid" 同时属于5与6</p><p>$coll-&gt; find(array('groupid'=&gt;array('$all'=&gt;array(5, 6))));</p><p>//* 数组很大多数情况下可以这样理解:每一个元素都是整个键的值</p><p>//No.05: 匹配元素数量($size)</p><p>//eg: 用户有两个身份</p><p>$coll-&gt; find(array('groupid'=&gt;array('$size'=&gt; 2)));</p><p>//* 官网上说不能用来匹配一个范围内的元素，如果想找$size&lt;5之类的，他们建议创建一个字段来保存元素的数量</p><p>//No.06: 判断一个元素是否存在($exists)</p><p>//eg: "age" 存在的用户</p><p>$coll-&gt; find(array('age'=&gt;array('$exists'=&gt; true)));</p><p>//No.07: 匹配元素类型($type)</p><p>//eg: "age" 是int 类型</p><p>$coll-&gt; find(array('age'=&gt;array('$type'=&gt; 16)));</p><p>//* Int(16),String(2)</p><p>//No.08: 取反($not)</p><p>//eg: 获取 "age" 不为5的数据</p><p>$coll-&gt; find(array('age'=&gt;array('$not':5)));</p><p>//No.09: 正则表达式</p><p>//eg: 获取列"user"以"a"开头的数据</p><p>$coll-&gt; find(array('user'=&gt;'/^a/'));</p><p>//No.10: 查询内嵌数据内的值</p><p>$coll-&gt; find(array('user.first'=&gt;'lai'));</p><p>//No.11: $elemMatch</p><p>// 查询内嵌文档的时候，将限定条件进行分组</p><p>$coll-&gt;find({'user':{'$elemMatch':{'first':'lai','last':'qian'}}});</p><p>//No.12: Where查询 -- 非必要时不要使用，因为比常规查询慢很多</p><p>$coll-&gt;find({'$where':'function(){ return this.x + this.y == 10;}'});</p><p>$coll-&gt;find({'$where':'this.x+this.y==10'});</p><p>// 非要使用的时候，先用常规查询过滤数据，where只用来调优数据</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

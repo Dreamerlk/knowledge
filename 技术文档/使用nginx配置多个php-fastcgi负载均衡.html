@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用nginx配置多个php-fastcgi负载均衡</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">使用nginx配置多个php-fastcgi负载均衡</h1>
+        <div class="show-content">
+          <p>配置还是非常简单的，充分体现了<a href="http://ipbfans.org/tag/nginx" target="_blank">nginx</a>的强大与配置的简单。<br></p><p>应用的最前端是<b>一台nginx服务器，所有静态的内容都由nginx来处理</b>，而将所有<a href="http://ipbfans.org/tag/php" target="_blank">php</a>的 请求都分摊到下游的若干台</p><p>运行<b>php fastcgi守护进程的服务器中</b>，这样可以以一种廉价的方案来实现对系统负载的分摊，扩展系统的负载能力。</p><p>三台php-fastcgi服务器的ip地址分别为：</p><p><b>172.16.236.110 ,   172.16.236.111,     172.16.236.112</b></p><p>运行php-fastcgi进程时，需要让php-cgi监听到服务器的局域网地址（分别如上所示），而不是之前一般都是监听的</p><p>本地地址（127.0.0.1）。</p><p><b>以 172.16.236.110这台服务器为例：</b></p><p>/usr/local/php5/bin/php-cgi-b172.16.236.110:9000</p><p>或许你用spawn-fcgi来启动php-fcgi，那么就是这样（供参考，其实也就是修改监听的地址和端口即可）：</p><p>/usr/local/lighttpd/bin/spawn-fcgi-f/usr/local/php5/bin/php-cgi-a172.16.236.110-p9000</p><p><b>又或许你是用php-fpm来管理php-fcgi，那么你需要修改php-fpm的配置：</b></p><p><b>vim/usr/local/php5/etc/php-fpm.conf</b></p><p>找到这个配置项（其中的地址可能需要根据你自己环境来调整）</p><p> name="<b>listen_address</b>"&gt;127.0.0.1:9000&gt;</p><p>修改为：</p><p> name="<b>listen_address</b>"<b>&gt;172.16.236.110:9000&gt;</b></p><p>修改完毕后，重启你的php-fpm进程。</p><p>然后按照上面的步骤，依次修改其他php fastcgi服务器。</p><p>php方面的工作暂时就是这些，下面修改nginx。</p><p><b>vim</b>/usr/local/nginx/conf/nginx.conf</p><p>在配置文件的http段内增加类似如下的配置：</p><p><b>upstream myfastcgi{</b></p><p>server 172.16.236.110 weight=1;</p><p>server 172.16.236.111 weight=1;</p><p>server 172.16.236.112 weight=1;</p><p>}</p><p>我这里三台php fastcgi服务器的权重是相同的，所以其中的weight值都是1，如果你的php fastcgi服务器需要分主次，那么</p><p>可以通过调整其weight值来达到目的。比如以第一台服务器为主，其他两台为辅，则就是这样：</p><p><b>upstreammyfastcgi{</b></p><p>server 172.16.236.110 weight=1;</p><p>server 172.16.236.111 weight=2;</p><p>server 172.16.236.112 weight=2;</p><p>}</p><p>然后找到原来nginx关于php fastcgi配置的部分，比如：</p><p><b>location~\.php${</b></p><p>fastcgi_pass127.0.0.1:9000;</p><p>fastcgi_index<a href="http://perldoc.perl.org/functions/index.html" target="_blank">index</a>.php;</p><p>fastcgi_param  SCRIPT_FILENAME$document_root$fastcgi_script_name;</p><p>include fastcgi_params;</p><p>}</p><p>将其中的fastcgi_pass那一段改为：</p><p><b>fastcgi_pass myfastcgi;</b></p><p>其中的myfastcgi也就是上面刚刚配置的php fastcgi均衡器的名字了。</p><p>完了以后，重启nginx即可。</p><p>简单吧，就通过这么几个简单的配置，就可以实现一个经济高效的nginx、多php-fcgi的负载均衡解决方案了。</p><p>当然了，这样的方案运用到实际项目中 还需要进行一些细化的配置，主要是php方面还需要进一步配置，</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

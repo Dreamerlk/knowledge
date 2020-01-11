@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQ18年，解密8亿月活的QQ后台服务接口隔离技术</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">QQ18年，解密8亿月活的QQ后台服务接口隔离技术</h1>
+        <div class="show-content">
+          <p><b>QQ18年</b><br></p><p><b>1999年2月10日，腾讯QQ横空出世。光阴荏苒，那个在你屏幕右下角频频闪动的企鹅已经度过了18个年头。随着QQ一同成长的你，还记得它最初的摸样吗？</b></p><p>1999年：腾讯QQ的前身OICQ诞生，该版本具备中文网络寻呼机、公共聊天室以及传输文件功能。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-ecb2a0a23c41fd75.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-ecb2a0a23c41fd75.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>1999年QQ界面</p><p>2000年，OICQ正式更名为QQ，发布视频聊天功能、QQ群和QQ秀等功能。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-318f7806d5b1386e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-318f7806d5b1386e.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>2003年版本，QQ发布聊天场景、捕捉屏幕、给好友播放录影及QQ炫铃等功能。</p><p>2004年，QQ新增个人网络硬盘、远程协助和QQ小秘书功能。</p><p>···</p><p>几经更迭，QQ版本也产生许多变化，很多操作方式都变了，也让QQ更有现代感了。如今的QQ越来越精美，越来越简洁，如你所见。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-6121b3c84cda5793.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-6121b3c84cda5793.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-827a8c06a47d446e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-827a8c06a47d446e.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>据不完全统计，腾讯QQ月活用户达到8.7亿左右，而这个数字还在不断增加。。。</p><p>如此庞大的用户群的任何行为，都会产生巨大的影响。</p><p>2017年春节，QQ推出AR红包加入红包大战，经调查手机QQ的红包全网渗透率达到52.9%。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-bb5b486ba902811d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-bb5b486ba902811d.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>在此期间，后台想必又一次承受了海量的压力，年后第一波推送，来看看腾讯内部对QQ后台的接口处理的相关技术干货，或许可以给到你答案。</p><p><b>一</b></p><p><b>背景</b></p><p>QQ后台提供了一套内部访问的统一服务接口，对腾讯各业务部门提供统一的资料关系链访问服务，后面我们把这套接口简称为DB。</p><p>现在说说分set的背景：2013年的某一天，某个业务的小朋友在申请正式环境的DB接入权限后，使用正式环境来验证刚写完的测试程序，循环向DB接口机发送请求包，但因为这个包格式非法，触发了DB解包的一个bug，导致收到这些请求包的服务器群体core</p><p>dump，无一幸免。。。。整个DB系统的服务顿时进入瘫痪状态。</p><p>因此有了故障隔离的需求，2014年初，我们着手DB的故障隔离增强改造。实现方法就是分set服务–把不同业务部门的请求定向到不同的服务进程组上，如果某个业务的请求有问题，最多只影响一个部门，不会影响整个服务系统。</p><p><b>二</b></p><p><b>总体方案</b></p><p>为了更清楚描述分set的方案，我们通过两个图进行分set前后的对比。</p><p><b>分set之前：</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-e9facc7e3b67a6d6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-e9facc7e3b67a6d6.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p><b>分set之后：</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-9977cfb253b1060a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-9977cfb253b1060a.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>从图中可以看出，实现方式其实非常简单，就是多启动一个proxy进程根据IP到set的映射关系分发请求包到对应set的进程上。</p><p><b>三</b></p><p><b>分set尝试</b></p><p>很多事情往往看起来非常简单，实现起来却十分复杂，DB分set就是一个典型的例子。怎么说呢？先看看我们刚开始实现的分set方案。</p><p><b>实现方案一：通过socket转包给分set进程，分set进程直接回包给前端。</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-d89b859620b9e466.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-d89b859620b9e466.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>这个方案刚发布几台后就发现问题：</p><p>1，有前端业务投诉回包端口不对导致访问失败。后来了解这些业务会对回包端口进行校验，如果端口不一致就会把包丢弃。</p><p>2，CPU比原来上涨了25%（同样的请求量，原来是40%，使用这个方案后CPU变成50%）</p><p>回包端口改变的问题因为影响业务（业务就是我们的上帝，得罪不起^^），必须马上解决，于是有了方案二。</p><p><b>实现方案二：通过socket转包给分set进程，分set进程回包给proxy，由proxy回包。</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-30f80651667da0ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-30f80651667da0ae.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>改动很快完成，一切顺利，马上铺开批量部署。。。。</p><p>晚上10点准时迎来第一次高峰，DB出现大量的丢包和CPU告警，运维紧急迁移流量。</p><p>第二天全部回滚为未分set的版本。</p><p>重新做性能验证的时候，发现CPU比原来涨了50%，按这个比例，原来600多台机器，现在需要增加300多台机器才能撑起同样请求的容量。（这是写本文时候的机器数，目前机器数已经翻倍了~）</p><p>后来分析原因的时候，发现网卡收发包量都涨了一倍，而CPU基本上都消耗在内核socket队列的处理上，其中竞争socket资源的spin_lock占用了超过30%的CPU — 这也正是我们决定一定要做无锁队列的原因。</p><p><b>四</b></p><p><b>最终实现方案</b></p><p>做互联网服务，最大的一个特点就是，任何一项需求，做与不做，都必须在投入、产出、时间、质量之间做一个取舍。</p><p>前面的尝试选择了最简单的实现方式，目的就是为了能够尽快上线，减少群体core掉的风险，但却引入了容量不足的风险。</p><p>既然这个方案行不通，那就得退而求其次（退说的是延期，次说的是牺牲一些人力和运维投入），方案是很多的，但是需要以人力作为代价。</p><p>举个简单的实现方法：安装一个内核模块，挂个netfilter钩子，直接在网络层进行分set，再把回包改一下发送端口。</p><p><b>这在内核实现是非常非常简单的事情，但却带来很大的风险：</b></p><p>1，不是所有同事都懂内核代码</p><p>2，运营环境的机器不支持动态加载内核模块，只能重新编译内核</p><p>3，从运维的角度：动内核 == 杀鸡取卵 — 内核有问题，都不知道找谁了</p><p>好吧，我无法说服开发运营团队，就只能放弃这种想法了–即便很不情愿。</p><p>。。。跑题了，言归正传，这是我们重新设计的方案：</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-0981a7aeea022230.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-0981a7aeea022230.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p><b>方案描述：</b></p><p>1，使用一写多读的共享内存队列来分发数据包，每个set创建一个shm_queue，同个set下面的多个服务进程通过扫描shm_queue进行抢包。</p><p>2，Proxy在分发的时候同时把收包端口、客户端地址、收包时间戳（用于防滚雪球控制，后面介绍）一起放到shm_queue中。</p><p>3，服务处理进程回包的时候直接使用Raw Socket回包，把回包的端口写成proxy收包的端口。</p><p><b>看到这里，各位同学可能会觉得这个实现非常简单。。。不可否认，确实也是挺简单的~~</b></p><p><b>不过，在实施的时候，有一些细节是我们不得不考虑的，包括：</b></p><p>１）这个共享内存队列是一写多读的（目前是一个proxy进程对应一组set化共享内存队列，proxy的个数可以配置为多个，但目前只配一个，占单CPU不到10%的开销），所以共享内存队列的实现必须有效解决读写、读读冲突的问题，同时必须保证高性能。</p><p>２）服务server需要侦听后端的回包，同时还要扫描shm_queue中是否有数据，这两个操作无法在一个select或者epoll_wait中完成，因此无法及时响应前端请求，怎么办？</p><p>3）原来的防滚雪球控制机制是直接取网卡收包的时间戳和用户层收包时系统时间的差值，如果大于一定阀值（比如100ms），就丢弃。现在server不再直接收包了，这个策略也要跟着变化。</p><p><b>基于signal通知机制的无锁共享内存队列</b></p><p><b>A. 对于第一个问题，解决方法就是无锁共享内存队列，使用CAS来解决访问冲突。</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-fa2af60b6c4874c3.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-fa2af60b6c4874c3.jpg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>这里顺便介绍一下CAS（Compare And Swap），就是一个汇编指令cmpxchg，用于原子性执行CAS（mem, oldvalue, newvalue）：如果mem内存地址指向的值等于oldvalue，就把newvalue写入mem，否则返回失败。</p><p>那么，读的时候，只要保证修改ReadIndex的操作是一个CAS原子操作，谁成功修改了ReadIndex，谁就获得对修改前ReadIndex指向元素的访问权，从而避开多个进程同时访问的情况。</p><p><b>B. 对于第二个问题，我们的做法就是使用注册和signal通知机制：</b></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-c2e2f1d2a47aa1a7.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-c2e2f1d2a47aa1a7.jpg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>工作方式如下：</p><p>1）Proxy负责初始化信号共享内存</p><p>2）Server进程启动的时候调用注册接口注册自己的进程ID，并返回进程ID在进程ID列表中的下标（sigindex）</p><p>3）在Server进入睡眠之前调用打开通知接口把sigindex对应的bitmap置位，然后进入睡眠函数（pselect）</p><p>4）Proxy写完数据发现共享内存队列中的块数达到一定个数（比如40，可以配置）的时候，扫描进程bitmap，根据对应bit为1的位取出一定个数（比如8，可以配置为Server进程的个数）的进程ID</p><p>5）Proxy遍历这些进程ID，执行kill发送信号，同时把bitmap对应的位置0（防止进程死了，不断被通知）</p><p>6）Server进程收到信号或者超时后从睡眠函数中醒来，把sigindex对应的bit置0，关闭通知</p><p>除了signal通知，其实还有很多通知机制，包括pipe、socket，还有较新的内核引入的eventfd、signalfd等等，我们之所以选择比较传统的signal通知，主要因为简单、高效，兼容各种内核版本，另外一个原因，是因为signal的对象是进程，我们可以选择性发送signal，避免惊群效应的发生。</p><p><b>防滚雪球控制机制</b></p><p>前面已经说过，原来的防滚雪球控制机制是基于网卡收包时间戳的。但现在server拿不到网卡收包的时间戳了，只能另寻新路，新的做法是：</p><p>Proxy收包的时候把收包时间戳保存起来，跟请求包一起放到队列里面，server收包的时候，把这个时间戳跟当前时间进行对比。</p><p>这样能更有效的做到防滚雪球控制，因为我们把这个包在前面的环节里面经历的时间都考虑进来了，用图形描述可能更清楚一点。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-ec03c680808d796e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-ec03c680808d796e.jpg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p><b>五</b></p><p><b>性能验证</b></p><p>使用shm_queue和raw socket后，DB接口机处理性能基本跟原来未分set的性能持平，新加的proxy进程占用的CPU一直维持在单CPU 10%以内，但摊分到多个CPU上就变成非常少了（对于8核的服务器，只是增加了1.25%的平均CPU开销，完全可以忽略不计）。</p><p>最后，分set的这个版本已经正式上线运行一段时间了，目前状态稳定。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

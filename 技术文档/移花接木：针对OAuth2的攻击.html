@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移花接木：针对OAuth2的攻击</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">移花接木：针对OAuth2的攻击</h1>
+        <div class="show-content">
+          <p>作为第三方应用，为了提升用户体验，往往会提供第三方社交账号登录或者绑定的功能，这背后使用到的关键技术是OAuth认证。想要在自己的应用里集成OAuth不是难事儿，各大社交网站都提供了详尽的文档指南。<br></p><p>OAuth的复杂度比较高，有不少安全方面的坑，开发者在使用过程中一不注意可能就会掉进去，比如说不正确的使用OAuth2可能会遭遇到CSRF攻击。本文将对这个安全风险做一个通俗易懂的解释。</p><p>老司机发车前的特别提醒：阅读本文需要你对OAuth2有一些了解，可以参考文末的链接。</p><p>1. OAuth2 授权模式回顾</p><p>在开始之前，让我们先来回顾一下OAuth2中最典型的Authorization Code 授权模式，其大致流程如下：</p><p><a href="http://insights.thoughtworkers.org/wp-content/uploads/2017/07/1-OAuth2-Authorization-Code-Flow.png" target="_blank"></a></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-046e9cb38b85f992.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-046e9cb38b85f992.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>图1：OAuth2 Authorization Code Flow</p><p>我们把OAuth2的整个认证过程大致分为三个阶段。第一阶段主要是向用户取得授权许可，对应图中的第1、2、3步；第二阶段主要是申请访问令牌（access_token），对应图中的第4、5步；第三阶段就是使用access_token获取用户数据。</p><p>这一过程中涉及了不少敏感参数和数据，例如client_secret相当于是第三方应用自己的密码，access_token某种程度上来讲就是用户的session</p><p>id。由于这些参数以及数据极其特殊，我们当然得确保它们的安全性，HTTPS加密传输以及安全存储是必不可少的防护手段。不过仅仅做到这些是远远不够的，在这个流程里存在一个弱点，容易被攻击者利用进行CSRF攻击。</p><p>2. 针对OAuth2的CSRF攻击</p><p>2.1 攻击流程</p><p>让我们来看一个针对OAuth2的CSRF攻击的例子。假设有用户张三，和攻击者李四，还有一个第三方Web应用Tonr，它集成了第三方社交账号登录，并且允许用户将社交账号和Tonr中的账号进行绑定。此外还有一个OAuth2服务提供者Sparklr。</p><p><a href="http://insights.thoughtworkers.org/wp-content/uploads/2017/07/2-CSRF-attack.png" target="_blank"></a></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-062136454252a3c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-062136454252a3c5.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>图2：模拟攻击案例中涉及的角色</p><p>Step 1. 攻击者李四登录Tonr网站，并且选择绑定自己的Sparklr账号。</p><p>Step 2. Tonr网站将李四重定向到Sparklr，由于他之前已经登录过Sparklr，所以Sparklr直接向他显示“是否授权Tonr访问”的页面。</p><p>Step 3. 李四在点击”同意授权“之后，截获Sparklr服务器返回的含有Authorization Code参数的HTTP响应。</p><p>Step 4. 李四精心构造一个Web页面，它会触发Tonr网站向Sparklr发起令牌申请的请求，而这个请求中的Authorization Code参数正是上一步截获到的code。</p><p>Step 5. 李四将这个Web页面放到互联网上，等待或者诱骗受害者张三来访问。</p><p>Step 6.张三之前登录了Tonr网站，只是没有把自己的账号和其他社交账号绑定起来。在张三访问了李四准备的这个Web页面后，令牌申请流程在张三的浏览器里被顺利触发，Tonr网站从Sparklr那里获取到access_token，但是这个token以及通过它进一步获取到的用户信息却都是攻击者李四的。</p><p>Step 7. Tonr网站将李四的Sparklr账号同张三的Tonr账号关联绑定起来，从此以后，李四就可以用自己的Sparklr账号通过OAuth登录到张三在Tonr网站中的账号，堂而皇之的冒充张三的身份执行各种操作。</p><p>等等，这一切发生得太快，还没看清楚李四怎么就登录到张三的账号里去了。没关系，让我们从几个不同的角度来看看这当中发生了什么。</p><p>2.2 受害者张三(Resource Owner)视角</p><p>受害者张三访问了一个Web页面，然后，就没有然后了，他在Tonr网站上的账号就和攻击者李四在Sparklr上的账号绑定到了一起。伪造的请求是经过精心构造的，令牌申请这一过程在张三的浏览器里是非常隐蔽的被触发的，换句话讲就是，他根本不知道这背后发生了什么。</p><p>2.3 Tonr网站(Client)视角</p><p>从Tonr网站来看，它收到的所有请求看上去都是正常的。首先它收到了一个HTTP请求，其代表着当前用户张三在Sparklr网站上已经做了“同意授权”操作。其内容如下：</p><p>GET /bindingCallback?code=AUTHORIZATION_CODE</p><p>不过需要注意的是，URL里的code不是当前受害者张三的Authorization Code，而是攻击者李四的。</p><p>当Tonr收到这样的请求时，它以为张三已经同意授权（但实际上这个请求是李四伪造的），于是就发起后续的令牌申请请求，用收到的Authorization</p><p>Code向Sparklr换取access_token，只不过最后拿到的是攻击者李四的 access_token。</p><p>最后，Tonr网站把攻击者李四的access_token和当前受害者张三在Tonr网站上的账号进行关联绑定。</p><p>2.4 Sparklr网站(OAuth2服务提供者)视角</p><p>Sparklr网站也是一脸茫然的样子，因为在它看来，自己收到的授权请求，以及后续的令牌申请请求都是正常的，或者说它无法得知接收到的这些请求之间的关联关系，而且也无法区别出这些请求到底是来自张三本人，还是由李四伪造出来的。因此只要自己收到的参数是正确有效的，那就提供正常的认证服务，仅此而已。</p><p>2.5 攻击者李四视角</p><p>李四伪造了一个用户授权成功的请求，并且将其中的Authorization Code参数替换成了自己提前获取到的code。这样，当受害者张三的浏览器被欺骗从而发起令牌申请请求时，实际上是在用张三在Tonr网站上的账号和李四在Sparklr网站上的账号做绑定。</p><p>攻击完成后，李四在Tonr网站上可以通过自己在Sparklr网站的账号进行登录，而且登录进入的是张三在Tonr网站上的账号。而张三通过自己在Tonr网站上的账号登录进去之后，看到的是李四在Sparklr网站上的数据。</p><p>2.6 上帝视角</p><p>从整体上来看，这次攻击的时序图应该是下面这个样子的：</p><p><a href="http://insights.thoughtworkers.org/wp-content/uploads/2017/07/3-Sparklr.png" target="_blank"></a></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-a33f27efe850f340.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-a33f27efe850f340.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>图3：攻击时序图示</p><p>3. 漏洞的本质</p><p>这个问题的关键点在于，OAuth2的认证流程是分为好几步来完成的，在图1中的第4步，第三方应用在收到一个GET请求时，除了能知道当前用户的cookie，以及URL中的Authorization</p><p>Code之外，难以分辨出这个请求到底是用户本人的意愿，还是攻击者利用用户的身份伪造出来的请求。</p><p>于是乎，攻击者就能使用移花接木的手段，提前准备一个含有自己的Authorization</p><p>Code的请求，并让受害者的浏览器来接着完成后续的令牌申请流程。</p><p>4. 前提条件</p><p>尽管这个攻击既巧妙又隐蔽，但是要成功进行这样的CSRF攻击也是需要满足一定前提条件的。</p><p>首先，在攻击过程中，受害者张三在Tonr网站上的用户会话(User Session)必须是有效的，也就是说，张三在受到攻击前已经登录了Tonr网站。</p><p>其次，整个攻击必须在短时间内完成，因为OAuth2提供者颁发的Authorization Code有效期很短，OAuth2官方推荐的时间是不大于10分钟，而一旦Authorization Code过期那么后续的攻击也就不能进行下去了。</p><p>最后，一个Authorization Code只能被使用一次，如果OAuth2提供者收到重复的Authorization</p><p>Code，它会拒绝当前的令牌申请请求。不止如此，根据OAuth2官方推荐，它还可以把和这个已经使用过的Authorization</p><p>Code相关联的access_token全部撤销掉，进一步降低安全风险。</p><p>5. 防御办法</p><p>要防止这样的攻击其实很容易，作为第三方应用的开发者，只需在OAuth认证过程中加入state参数，并验证它的参数值即可。具体细节如下：</p><p>在将用户重定向到OAuth2的Authorization Endpoint去的时候，为用户生成一个随机的字符串，并作为state参数加入到URL中。</p><p>在收到OAuth2服务提供者返回的Authorization Code请求的时候，验证接收到的state参数值。如果是正确合法的请求，那么此时接受到的参数值应该和上一步提到的为该用户生成的state参数值完全一致，否则就是异常请求。</p><p>state参数值需要具备下面几个特性：</p><p>不可预测性：足够的随机，使得攻击者难以猜到正确的参数值</p><p>关联性：state参数值和当前用户会话（user session）是相互关联的</p><p>唯一性：每个用户，甚至每次请求生成的state参数值都是唯一的</p><p>时效性：state参数一旦被使用则立即失效</p><p>6. 总结</p><p>要避免遭受本文提到的CSRF攻击问题，需要第三方应用正确的使用state参数，然而纵观各大OAuth服务提供者，在其开发文档里都没有明确把state参数和CSRF攻击联系起来，仅仅只是像下面这样一句话带过：</p><p><i>“参数：state</i></p><p><i>是否必须：否</i></p><p><i>说明：重定向后会带上state参数，开发者可以填写a-zA-Z0-9的参数值，最多128字节”</i></p><p>让事情变得更糟糕的是，state是可选参数，因此更容易被开发者忽略，造成安全风险。此外，本文中的攻击非常巧妙，可以悄无声息的攻陷受害者的账号，难以被察觉到。</p><p>作为第三方应用的开发者，我们除了参考OAuth2服务提供者的开发文档之外，还应当加深自己对OAuth2的理解，尽可能的避开这些安全的坑。 而作为OAuth2服务提供者，也应当承担起提醒开发者注意防范安全风险的责任。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

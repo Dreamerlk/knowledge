@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nginx反向代理服务器+负载均衡</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">Nginx反向代理服务器+负载均衡</h1>
+        <div class="show-content">
+          <p>nginx反向代理服务器+负载均衡<br></p><p>用nginx做反向代理和负载均衡非常简单,</p><p>支持两个用法 1个proxy, 1个upstream,分别用来做反向代理,和负载均衡</p><p>以反向代理为例, nginx不自己处理php的相关请求,而是把php的相关请求转发给apache来处理.</p><p>proxy反向代理</p><p>server {</p><p>listen80;#监听端口</p><p>server_name localohst;#监听域名</p><p>location /  {</p><p>root /var/www/a.com;#根目录定位</p><p>index index.php;</p><p>}</p><p>location ~ \.php {</p><p>#将客户IP地址传递给代理服务器</p><p>proxy_set_header X-Forwarded-For$remote_addr;</p><p>proxy_pass http://127.0.0.1:8080;</p><p>#如果是PHP 则转发给apache来处理</p><p>}</p><p>}</p><p>upstream负载均衡</p><p>http{</p><p>#1. 在http节点下，添加upstream节点。</p><p>upstream imgserver{</p><p>server192.168.1.200weight=1max_fails=2fail_timeout=3;</p><p>server192.168.1.201weight=1max_fails=2fail_timeout=3;</p><p>}</p><p>server{</p><p>listen80;#监听端口</p><p>server_name localohst;#监听域名</p><p>location /  {</p><p>root /var/www/a.com;</p><p>#根目录定位</p><p>indexindex.php;</p><p>}</p><p>location ~ \.php {</p><p>proxy_pass http://127.0.0.1:8080;</p><p>#如果是PHP 则转发给apache来处理 即反向代理</p><p>}</p><p>location ~* \.(jpg|jpeg|gif|png) {</p><p>#将客户IP地址传递给代理服务器proxy_set_header X-Forwarded-For $remote_addr;</p><p>#2.将server节点下的location节点中的proxy_pass配置为：http:// + upstream名称，即“http://imgserver”.proxy_pass http://imgserver;#如果是PHP 则转发给apache来处理</p><p>}</p><p>}</p><p>}</p><p>3.</p><p>现在负载均衡初步完成了。upstream按照轮询（默认）方式进行负载，每个请求按时间顺序逐一分配到不同的后端服务器，如果后端服务器down掉，能自动剔除。虽然这种方式简便、成本低廉。但缺点是：可靠性低和负载分配不均衡。适用于图片服务器集群和纯静态页面服务器集群。</p><p>除此之外，upstream还有其它的分配策略，分别如下：</p><p>weight（权重）</p><p>指定轮询几率，weight和访问比率成正比，用于后端服务器性能不均的情况。如下所示，10.0.0.88的访问比率要比10.0.0.77的访问比率高一倍。</p><p>upstream linuxidc{</p><p>server10.0.0.77weight=5;</p><p>server10.0.0.88weight=10;</p><p>}</p><p>max_fails（允许请求失败次数）</p><p>允许请求失败的次数默认为1.当超过最大次数时，返回proxy_next_upstream 模块定义的错误.</p><p>upstream linuxidc{server10.0.0.77max_fails=2;server10.0.0.88max_fails=3;}</p><p>fail_timeout(失败后，暂停的时间)</p><p>max_fails次失败后，暂停的时间。</p><p>upstream linuxidc{</p><p>server10.0.0.77max_fails=2fail_timeout=1;</p><p>server10.0.0.88max_fails=3fail_timeout=3;}</p><p>down(不参与负载)</p><p>表示当前的server暂时不参与负载.</p><p>upstream linuxidc{</p><p>server 10.0.0.77 down;</p><p>}</p><p>backup(备用服务器)</p><p>其它所有的非backup机器down或者忙的时候，请求backup机器。所以这台机器压力会最轻。</p><p>upstream linuxidc{</p><p>server10.0.0.77down;</p><p>server10.0.0.88backup;</p><p>}</p><p>ip_hash（访问ip）</p><p>每个请求按访问ip的hash结果分配，这样每个访客固定访问一个后端服务器，可以解决session的问题。</p><p>upstream favresin{      <br></p><p>ip_hash;</p><p>server10.0.0.10:8080;</p><p>server10.0.0.11:8080;</p><p>}</p><p>fair（第三方）</p><p>按后端服务器的响应时间来分配请求，响应时间短的优先分配。与weight分配策略类似。</p><p>upstream favresin{</p><p>server10.0.0.10:8080;</p><p>server10.0.0.11:8080;      <br></p><p>fair;</p><p>}</p><p>url_hash（第三方）</p><p>按访问url的hash结果来分配请求，使每个url定向到同一个后端服务器，后端服务器为缓存时比较有效。</p><p>注意：在upstream中加入hash语句，server语句中不能写入weight等其他的参数，hash_method是使用的hash算法。</p><p>upstream resinserver{      <br></p><p>server10.0.0.10:7777;     <br></p><p> server10.0.0.11:8888;</p><p>hash$request_uri;</p><p>hash_method crc32;</p><p>}</p><p>upstream还可以为每个设备设置状态值，这些状态值的含义分别如下：</p><p>down 表示当前的server暂时不参与负载.</p><p>weight 默认为1.weight越大，负载的权重就越大。</p><p>max_fails ：允许请求失败的次数默认为1.当超过最大次数时，返回proxy_next_upstream 模块定义的错误.</p><p>fail_timeout : max_fails次失败后，暂停的时间。</p><p>backup： 其它所有的非backup机器down或者忙的时候，请求backup机器。所以这台机器压力会最轻。</p><p>upstream bakend{</p><p>#定义负载均衡设备的Ip及设备状态ip_hash;</p><p>server10.0.0.11:9090down;</p><p>server10.0.0.11:8080weight=2;</p><p>server10.0.0.11:6060;</p><p>server10.0.0.11:7070backup;</p><p>}</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

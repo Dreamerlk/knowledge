@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【代码片-1】 php7 mongoDB 简单封装</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">【代码片-1】 php7 mongoDB 简单封装</h1>
+        <div class="show-content">
+          <p></p><pre code_snippet_id="1780553" snippet_file_name="blog_20160724_1_6454342" name="code" class="php">﻿<br></pre><p></p><p>/**</p><p>* mongoDB 简单 封装</p><p>* 注意：支持 mongoDB 3.2+</p><p>* 具体参数及相关定义请参见：<a href="https://docs.mongodb.com/manual/reference/command/" target="_blank">https://docs.mongodb.com/manual/reference/command/</a></p><p>*</p><p>* @author color_wind</p><p>*/</p><p>finalclassm_mgdb {</p><p>privatestatic$ins= [];</p><p>privatestatic$def="default";</p><p>private$_conn= null;</p><p>private$_db= null;</p><p>privatestatic$_config= [</p><p>"default"=&gt; ["url"=&gt;"<a href="mongodb://localhost:27017" target="_blank">mongodb://localhost:27017</a>","dbname"=&gt;"mydb1"],</p><p>"mdb1"=&gt; ["url"=&gt;"<a href="mongodb://10.0.0.12:27017" target="_blank">mongodb://10.0.0.12:27017</a>","dbname"=&gt;"mydb2"],</p><p>];</p><p>/**</p><p>* 创建mongo对象</p><p>* @param  string $confkey</p><p>* @return \m_mgdb</p><p>*/</p><p>staticfunctioni($confkey= NULL) {</p><p>if(!$confkey) {</p><p>$confkey= self::$def;</p><p>}</p><p>if(!isset(self::$ins[$confkey]) &amp;&amp; ($conf= self::$_config[$confkey])) {</p><p>$m=newm_mgdb($conf);</p><p>self::$ins[$confkey] =$m;</p><p>}</p><p>returnself::$ins[$confkey];</p><p>}</p><p>privatefunction__construct(array$conf) {</p><p>$this-&gt;_conn =newMongoDB\Driver\Manager($conf["url"]);</p><p>$this-&gt;_db   =$conf["dbname"];</p><p>}</p><p>/**</p><p>* 插入数据</p><p>* @param  string $collname</p><p>* @param  array  $documents    [["name"=&gt;"values", ...], ...]</p><p>* @param  array  $writeOps     ["ordered"=&gt;boolean,"writeConcern"=&gt;array]</p><p>* @return \MongoDB\Driver\Cursor</p><p>*/</p><p>functioninsert($collname,array$documents,array$writeOps= []) {</p><p>$cmd= [</p><p>"insert"=&gt;$collname,</p><p>"documents"=&gt;$documents,</p><p>];</p><p>$cmd+=$writeOps;</p><p>return$this-&gt;command($cmd);</p><p>}</p><p>/**</p><p>* 删除数据</p><p>* @param  string $collname</p><p>* @param  array  $deletes      [["q"=&gt;query,"limit"=&gt;int], ...]</p><p>* @param  array  $writeOps     ["ordered"=&gt;boolean,"writeConcern"=&gt;array]</p><p>* @return \MongoDB\Driver\Cursor</p><p>*/</p><p>functiondel($collname,array$deletes,array$writeOps= []) {</p><p>foreach($deletesas&amp;$_){</p><p>if(isset($_["q"]) &amp;&amp; !$_["q"]){</p><p>$_["q"] = (Object)[];</p><p>}</p><p>if(isset($_["limit"]) &amp;&amp; !$_["limit"]){</p><p>$_["limit"] = 0;</p><p>}</p><p>}</p><p>$cmd= [</p><p>"delete"=&gt;$collname,</p><p>"deletes"=&gt;$deletes,</p><p>];</p><p>$cmd+=$writeOps;</p><p>return$this-&gt;command($cmd);</p><p>}</p><p>/**</p><p>* 更新数据</p><p>* @param  string $collname</p><p>* @param  array  $updates      [["q"=&gt;query,"u"=&gt;update,"upsert"=&gt;boolean,"multi"=&gt;boolean], ...]</p><p>* @param  array  $writeOps     ["ordered"=&gt;boolean,"writeConcern"=&gt;array]</p><p>* @return \MongoDB\Driver\Cursor</p><p>*/</p><p>functionupdate($collname,array$updates,array$writeOps= []) {</p><p>$cmd= [</p><p>"update"=&gt;$collname,</p><p>"updates"=&gt;$updates,</p><p>];</p><p>$cmd+=$writeOps;</p><p>return$this-&gt;command($cmd);</p><p>}</p><p>/**</p><p>* 查询</p><p>* @param  string $collname</p><p>* @param  array  $filter     [query]     参数详情请参见文档</p><p>* @param  array  $writeOps   ["key"=&gt;vals,...] 其它参数 参数详情请参见文档</p><p>* @return \MongoDB\Driver\Cursor</p><p>*/</p><p>functionquery($collname,array$filter,array$writeOps= []){</p><p>$cmd= [</p><p>"find"=&gt;$collname,</p><p>"filter"=&gt;$filter</p><p>];</p><p>$cmd+=$writeOps;</p><p>return$this-&gt;command($cmd);</p><p>}</p><p>/**</p><p>* 执行MongoDB命令</p><p>* @param  array $param      执行的命令</p><p>* @return \MongoDB\Driver\Cursor</p><p>*/</p><p>functioncommand(array$param) {</p><p>$cmd=newMongoDB\Driver\Command($param);</p><p>return$this-&gt;_conn-&gt;executeCommand($this-&gt;_db,$cmd);</p><p>}</p><p>/**</p><p>* 获取当前mongoDB Manager</p><p>* @return MongoDB\Driver\Manager</p><p>*/</p><p>functiongetMongoManager() {</p><p>return$this-&gt;_conn;</p><p>}</p><p>}</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

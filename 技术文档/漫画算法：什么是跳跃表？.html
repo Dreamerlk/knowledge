@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>漫画算法：什么是跳跃表？</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">漫画算法：什么是跳跃表？</h1>
+        <div class="show-content">
+          <p>这是发生在很多年以前的故事……<br></p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-aae76253d7cf855f.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-aae76253d7cf855f.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-bfe4662112d364fd.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-bfe4662112d364fd.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-62c350930cb6a65f.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-62c350930cb6a65f.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-433448f7258e5c7f.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-433448f7258e5c7f.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>几天以前……</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-db836e09661845cc.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-db836e09661845cc.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-67cd5c101216cea1.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-67cd5c101216cea1.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-e862669791d7e07b.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-e862669791d7e07b.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-ec47a7050ce91262.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-ec47a7050ce91262.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-4016da101c012f2c.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-4016da101c012f2c.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>几天之后……</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-b7240e029eef05db.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-b7240e029eef05db.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>拍卖行的商品总数量有几十万件，对应数据库商品表的几十万条记录。</p><p>如果是按照商品名称精确查询还好办，可以直接从数据库查出来，最多也就上百条记录。</p><p>如果是没有商品名称的全量查询怎么办？总不可能把数据库里的所有记录全查出来吧，而且还要支持不同字段的排序。</p><p>所以，只能提前在内存中存储有序的全量商品集合，每一种排序方式都保存成独立的集合，每次请求的时候按照请求的排序种类，返回对应的集合。</p><p>比如按价格字段排序的集合：</p><p>比如按等级字段排序的集合：</p><p>需要注意的是，当时还没有Redis这样的内存数据库，所以小灰只能自己实现一套合适的数据结构来存储。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-832cb827cafab609.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-832cb827cafab609.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>拍卖行商品列表是线性的，最容易表达线性结构的自然是数组和链表。可是，无论是数组还是链表，在插入新商品的时候，都会存在性能问题。</p><p>按照商品等级排序的集合为例，如果使用数组，插入新商品的方式如下：</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-a8d3675c4381ef84.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-a8d3675c4381ef84.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>如果要插入一个等级是3的商品，首先要知道这个商品应该插入的位置。使用二分查找可以最快定位，这一步时间复杂度是O（logN）。</p><p>插入过程中，原数组中所有大于3的商品都要右移，这一步时间复杂度是O（N）。所以总体时间复杂度是O（N）。</p><p>如果使用链表，插入新商品的方式如下：</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-06525b1b986d86bc.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-06525b1b986d86bc.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>如果要插入一个等级是3的商品，首先要知道这个商品应该插入的位置。链表无法使用二分查找，只能和原链表中的节点逐一比较大小来确定位置。这一步的时间复杂度是O（N）。</p><p>插入的过程倒是很容易，直接改变节点指针的目标，时间复杂度O（1）。因此总体的时间复杂度也是O（N）。</p><p>这对于拥有几十万商品的集合来说，这两种方法显然都太慢了。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-c3b1bb295f3b1ce9.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-c3b1bb295f3b1ce9.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>——————————————</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-109c779cf5530dfa.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-109c779cf5530dfa.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-04ccd1e1913aa41f.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-04ccd1e1913aa41f.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-7a077e4bab28e3e8.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-7a077e4bab28e3e8.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-0b0e67ff317ada87.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-0b0e67ff317ada87.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-d4e51069e35a76be.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-d4e51069e35a76be.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-ad0f138e47cd2bbc.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-ad0f138e47cd2bbc.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-41976fad6d25bbeb.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-41976fad6d25bbeb.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-8832cdba57064bad.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-8832cdba57064bad.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-84f61c94726411d1.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-84f61c94726411d1.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-013d8f1e47280044.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-013d8f1e47280044.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-ceb3ab54109fb02a.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-ceb3ab54109fb02a.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-fe1cf5850593b065.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-fe1cf5850593b065.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-2a5a6cafcfaaa05b.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-2a5a6cafcfaaa05b.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-815e64fe75acb616.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-815e64fe75acb616.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-ebb2ec9b0c17afa2.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-ebb2ec9b0c17afa2.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-cc6db3a990decec9.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-cc6db3a990decec9.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-3e92cfa4382db9de.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-3e92cfa4382db9de.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-35484e3044a3be7d.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-35484e3044a3be7d.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-e97ddeda7f31df34.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-e97ddeda7f31df34.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-5a9000ff34bf6e01.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-5a9000ff34bf6e01.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-b0e10edf04cb0a06.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-b0e10edf04cb0a06.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-b66235183b571fb2.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-b66235183b571fb2.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-4446b9cb4a716ca0.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-4446b9cb4a716ca0.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-37977d82bf4c999c.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-37977d82bf4c999c.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-fa5522d8ea75b569.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-fa5522d8ea75b569.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-b93e8deda2beb3bc.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-b93e8deda2beb3bc.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-fce52f8c4914125f.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-fce52f8c4914125f.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-67c2561d821357fb.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-67c2561d821357fb.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-f9fe1b7a2bada665.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-f9fe1b7a2bada665.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-e3d35758538928b7.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-e3d35758538928b7.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-a8c7f7ce43e548ae.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-a8c7f7ce43e548ae.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-d139022d1086dd09.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-d139022d1086dd09.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-97a85673592af9c7.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-97a85673592af9c7.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-cb853252cfd0e0b6.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-cb853252cfd0e0b6.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-be2a86cc903d51f4.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-be2a86cc903d51f4.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-c464c96bde1cc236.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-c464c96bde1cc236.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>新节点和各层索引节点逐一比较，确定原链表的插入位置。O（logN）</p><p>把索引插入到原链表。O（1）</p><p>利用抛硬币的随机方式，决定新节点是否提升为上一级索引。结果为“正”则提升并继续抛硬币，结果为“负”则停止。O（logN）</p><p>总体上，跳跃表插入操作的时间复杂度是O（logN），而这种数据结构所占空间是2N，既空间复杂度是 O（N）。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-00840e7be2e910f2.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-00840e7be2e910f2.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-d5f796d4a9e235ab.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-d5f796d4a9e235ab.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-6c617e32fabf766e.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-6c617e32fabf766e.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-b0b812756bcea352.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-b0b812756bcea352.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-5108b7e4ea265978.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-5108b7e4ea265978.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-dcd78d0ccb71b7e6.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-dcd78d0ccb71b7e6.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>自上而下，查找第一次出现节点的索引，并逐层找到每一层对应的节点。O（logN）</p><p>删除每一层查找到的节点，如果该层只剩下1个节点，删除整个一层（原链表除外）。O（logN）</p><p>总体上，跳跃表删除操作的时间复杂度是O（logN）。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-94d20a6cf42d395d.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-94d20a6cf42d395d.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-97c288f3c3716b79.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-97c288f3c3716b79.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-b344ffccbec6e2a7.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-b344ffccbec6e2a7.jpeg?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>小灰和大黄并不知道，他们的这一解决方案和若干年后Redis当中的Sorted-set不谋而合。而Sorted-set这种有序集合，正是对于跳跃表的改进和应用。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

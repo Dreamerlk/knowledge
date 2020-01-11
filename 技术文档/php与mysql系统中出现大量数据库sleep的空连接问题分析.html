@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>php与mysql系统中出现大量数据库sleep的空连接问题分析</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">php与mysql系统中出现大量数据库sleep的空连接问题分析</h1>
+        <div class="show-content">
+          <p>最近所开发的系统中出现大量数据库sleep状态的空连接，于此同时通过Log发现系统中通过php的curl请求第三方API接口的反馈出现大量异常，不由得把2者联系起来分析原因。日志反应第三方接口响应缓慢，并且结果为空，原因不明，但是能想象到php发出curl请求后一直等待连接返回，等待过程中数据库连接开始sleep，直到curl超时，进程执行完毕数据库链接得以释放。<br></p><p>转载2个与php进程阻塞有关的文章</p><p>php+mysql+memcache实战型技术测试(答案公布)</p><p>出两个变态的题目，题目很变态，但是都是实战中遇到的真实案例，</p><p>1：我写一个程序，既要使用mysql也要使用memcache，</p><p>第一行是 mysql_connect,第二行是memcache_connect</p><p>换过来写，第一行是memcache_connect，第二行是mysql_connect</p><p>caoz发现实践中这两种写法有很大的区别，区别在哪里？</p><p>2：我写一个程序，使用了mysql，生成了一个页面最后用 echo $html; 输出</p><p>一种写法是</p><p>mysql_close();</p><p>echo $html;</p><p>另一种是</p><p>echo $html;</p><p>mysql_close();</p><p>caoz发现实践中这两种区别很大，区别在哪里？</p><p>两个全是实践中发现并调整的案例。</p><p>---------------------------------------------半夜黑眼圈更新博客的分割线--------------------------------</p><p>caoz写程序不是追求BT的人，caoz经常和工程师强调，不追求极端的技术体现或者技术炫耀，所以，如果读者认为这里的题目是为了所谓的诸如某个写法比某个写法资源开销小一点或者其他什么，那么这真不是caoz的本意。</p><p>这两道题都是真实运营环境中遇到的典型案例，典型在哪里呢？就是当你遇到一个系统故障的时候，你怎么分析，怎么思考，怎么判断多种关联因素的影响，所以这个题目答出答不出并不重要，重要的是怎么思考系统彼此的关系。</p><p>一个典型的系统故障是， mysql 连接过多，或者说too many</p><p>connections，这个问题困扰了我们很久，如果这是因为索引导致的，或者因为数据并发请求导致的，定位到原因并不复杂，但是当上述问题解决后，诡异的现象发生了，数据库几乎没有压力，没有阻塞进程，没有慢查询，但是mysql连接很多，而且都是sleep连接。此时，webserver的链接也很多，换句话说，因为php执行阻塞，导致mysql链接无法迅速释放，那么，php为什么会阻塞？</p><p>逐个断点分析发现，原来echo耽误了最多时间。</p><p>这个事情让caoz涨了点经验，之前从来不会认为echo是一个时间阻塞点（如果你在本机测试，你会认为其时间延迟几乎是0），但是实例跟踪发现，echo实际上在我们的工作环境中，代表的网络传输的过程，换言之，会因为路由，带宽的因素而等待，而此时，mysql的链接还在那里没有释放，是的，看到题目每个人都会想到，mysql_close要放在echo后面，但是为什么echo会耽误时间，很少人会想到。当然，这个也与工作环境有关，caoz只知道我们配置的webserver会有这种情况，是不是存在其他的配置模式，caoz没有实测，不敢乱说，但是这里的经验是，mysql_close放到echo前面，大量的sleep链接会迅速减少。</p><p>echo并不耗费太多系统资源，但是会等待网络传输，在高并发的网络环境下，注意这一点对数据库很有好处。</p><p>这个问题解决后，mysql健康了很多，但是偶然还会出现链接过多的问题，又困扰了很久，直到有一天，根据用户反馈的一些错误信息，发现memcached服务器有不稳定因素，原来是memcached流量过高产生阻塞，php进程等待链接，导致mysql链接大量等待，这是第一个题目的由来，其实这个题目本身没有标准答案，但是应该有一个意识，当你在一个脚本中同时启动A,B两个链接，那么如果你不能保证这两个链接是必然可靠的（通常是无法保障的），那么后者一旦阻塞，就会导致前者大量链接等待，而前者阻塞，通常不会影响后者。所以，这个答案取决于，哪个链接对你的应用更重要，以及哪个链接有更大的并发支撑性。</p><p>两道题说到底就是一个意思，当遇到系统问题和故障的时候，多想想一些关联的因素影响，多思考整个架构响应先后过程的逻辑，数据库连接过多，不一定是数据库造成的，web链接过多，也不一定非要去优化webserver，关联因素可能才是根源，解决了根源，表象才会彻底解决。</p><p>------------------------------------------------------------------------------------------------------------------------------</p><p>文章二：【减少MySQL的Sleep进程有效方法】</p><p>经常遇到很多朋友问到，他的MySQL中有很多Sleep进程，严重占用MySQL的资源，现在分析一下出现这种现象的原因和解决办法：</p><p>1，通常来说，MySQL出现大量Sleep进程是因为采用的PHP的MySQL长链接数据库方式，即使用了mysql_pconnect来打开链接数据库，解决办法就是使用“短”链接，即mysql_connect函数。</p><p>2，在使用mysql_connect短链接方式打开数据库，每个页面在打开数据库后，执行SQL完成，当页面脚本结束的时候，这个MySQL连接会自动关闭并且释放内存。但仍然出现大量Sleep进程，可以看看网站是否存在以下几个方面的问题。</p><p>A，硬盘上存在大量的静态文件，或者WEB服务器负荷太重，在处理HTTP请求响应变得太慢，这样也有可能导致出现大量Sleep进程，解决方法适当调整WEB服务参数和文件，一味的静态或者缓存化网页内容并不是灵丹妙药。</p><p>B，在网页脚本中，有些计算和应用可能非常耗时，比如在0秒的时候打开数据库执行完一段SQL代码后，网页脚本随即花了20秒钟进行一段复杂的运算，或者是require了一个庞大的PHP文件（比如含有几千个违规关键字的过滤函数），哪么这个时候在MySQL后台看到的进程中，这个20秒的过程</p><p>MySQL并没有做任何事情了，一直处于Sleep状态，直到这个页面执行完毕或者达到wait_timeout值（被强行关闭），优化网页脚本，尽量让程序快速运行，或者在执行这段耗时的运行过程中，执行mysql_close把当前MySQL链接强行关闭。</p><p>C，在采集站中，MySQL中大量的Sleep进程这类现象尤其明显（比如很多网友问道DeDeCMS的MySQL中出现大量Sleep），因为大部的采集器页面在运行过程中，事先打开了一个MySQL链接（可能是为了验证用户权限等），然后开始使用file_get_contents之类的操作去获取一个远程的网页内容，如果这个远程的站点访问速度太慢，比如花了10秒时间才把网页取回，哪么当前采集脚本程序就一直阻塞在这里，并且MySQL啥事也没干，一直处于Sleep状态。解决方法同上，在发出file_get_contents采集远程网页的时候，使用mysql_close强行关闭</p><p>MySQL的连接，等采集完成在适当需要的时候再重新mysql_connect即可。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>如何将 MySQL 查询速度提升 300 倍</title>
+    <style type="text/css" media="all">
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #777;
+        background-color: white;
+      }
+      .container {
+        width: 700px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .post {
+        font-family: Georgia, "Times New Roman", Times, "SimSun", serif;
+        position: relative;
+        padding: 70px;
+        bottom: 0;
+        overflow-y: auto;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 25px;
+        color: #515151;
+      }
+
+      .post h1{
+        font-size: 50px;
+        font-weight: 500;
+        line-height: 60px;
+        margin-bottom: 40px;
+        color: inherit;
+      }
+
+      .post p {
+        margin: 0 0 35px 0;
+      }
+
+      .post img {
+        border: 1px solid #D9D9D9;
+      }
+
+      .post a {
+        color: #28A1C5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="post">
+        <h1 class="title">如何将 MySQL 查询速度提升 300 倍</h1>
+        <div class="show-content">
+          <p>在进行性能分析前，需要先定位耗时查询。<br></p><p>MySQL 提供了内建的耗时查询日志。使用前，打开<b>my.cnf</b>文件，将<b>slow_query_log</b>设置为”On”。 同时将<b>long_query_time</b>设置为一个对一次查询来说比较慢的时间（秒数），比如 0.2。<b>slow_query_log_file</b>设置为你想保存日志文件的路径。然后运行代码，执行时间超过设定上限的查询将会被记录到日志中。</p><p>一旦定位这些烦人的查询，就可以探究慢的原因。MySQL提供了<b>EXPLAIN</b>关键字。可以与<b>SELECT、</b><b>DELETE、</b><b>INSERT、</b><b>REPLACE、</b><b>UPDATE</b>语句一起使用。只需要如下一样添加到查询开始处：</p><p>EXPLAIN SELECT picture.id, picture.title</p><p>FROM picture</p><p>LEFT JOIN album ON picture.album_id = album.idWHERE album.user_id = 1;</p><p>结果是对数据访问过程的解析。每行代表一个查询相关的数据表：</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-d28b87c1d740621c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-d28b87c1d740621c.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>重点是表名、使用的key、查询执行时所扫描的行数。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-47d5b3d8a8ad61c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-47d5b3d8a8ad61c5.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>这个查询扫描了picture表2百万行，对每个picture记录扫描了album表2万行。意味着，该查询实际扫描了album表400亿行。这个过程可以更高效。</p><p>索引</p><p>使用索引，可以极大提升性能。比如地址簿中的名字。找一个名字，你可以从头翻到尾，也可以找到相应的字符标签页来快速定位。</p><p>使用索引可以避免无必要的表扫描。比如在<b>picture.album_id</b>上添加索引：</p><p>ALTER TABLE picture ADD INDEX(album_id);</p><p>现在执行查询，就不会扫描整个picture列表了。首先，所有的album表会被扫描以找到属于该用户的album，然后，使用<b>album_id</b>列索引快速定位对应的picture。扫描的行数减少到了20万，比原始查询快了317倍。</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-a2aa77b48697e126.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-a2aa77b48697e126.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>按照以下方式添加索引可以确保两张表都能使用对应键：</p><p>ALTER TABLE album ADD INDEX(user_id);</p><div class="image-package">
+<img src="http://upload-images.jianshu.io/upload_images/6954572-0ca1f9a16ecae2f7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" data-original-src="http://upload-images.jianshu.io/upload_images/6954572-0ca1f9a16ecae2f7.png?imageMogr2/auto-orient/strip"><br><div class="image-caption"></div>
+</div><p>这次，album表不会被全部扫描，通过<b>user_id</b>键就可以精确定位相应的album。然后这100个album被扫描后，通过<b>album_id</b>键相关的picture也可以快速找到。每张表都用到了一个键进行查询性能优化，结果比原始查询快了380倍。</p><p>但是并不意味着可以随意添加索引，因为索引会导致写数据库用时增长。所以使用索引导致读用时缩短，写用时增长。因此，如果能提升读性能时再添加索引。使用<b>EXPLAIN</b>来确认索引是否被查询用到，没有就删除。</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
